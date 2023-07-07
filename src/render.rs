@@ -29,16 +29,28 @@ impl<'a> Renderer<'a> {
 
     fn render_code_block(&mut self, node: CodeBlock) {
         debug!("render_code_block: {:?}", node);
-        self.writer.inc_indent();
-        let code = node.body();
-        self.render_code(code);
-        self.writer.dec_indent();
+        self.writer.push("{");
+        self.render_code(node.body());
+        self.writer.push("}");
     }
 
     fn render_code(&mut self, node: Code) {
         debug!("render_code: {:?}", node);
-        for expr in node.exprs() {
+        let total = node.exprs().count();
+        let multiline = total > 1;
+        self.writer.inc_indent();
+        if multiline {
+            self.writer.newline_with_indent();
+        }
+        for (i, expr) in node.exprs().enumerate() {
             self.render_expr(expr);
+            if i + 1 == total {
+                // last element
+                self.writer.dec_indent();
+            }
+            if multiline {
+                self.writer.newline_with_indent();
+            }
         }
     }
 
@@ -154,22 +166,34 @@ impl<'a> Renderer<'a> {
     fn render_func_call(&mut self, node: FuncCall) {
         debug!("render_func_call: {:?}", node);
         self.render_expr(node.callee());
-        self.writer.push("(");
         self.render_args(node.args());
-        self.writer.push(")");
     }
 
     fn render_args(&mut self, node: Args) {
         debug!("render_args: {:?}", node);
         let total = node.items().count();
+        self.writer.push("(");
+        self.writer.inc_indent();
+        let multiline = total > 1;
+        if multiline {
+            self.writer.newline_with_indent();
+        }
         for (i, item) in node.items().enumerate() {
             self.render_arg(item);
+            if multiline {
+                self.writer.push(",");
+            }
             if i + 1 == total {
                 // last element
-            } else {
-                self.writer.push(", ");
+                self.writer.dec_indent();
+            } else if !multiline {
+                self.writer.push(" ");
+            }
+            if multiline {
+                self.writer.newline_with_indent();
             }
         }
+        self.writer.push(")");
     }
 
     fn render_arg(&mut self, node: Arg) {
@@ -256,9 +280,12 @@ impl<'a> Renderer<'a> {
 
     fn render_show(&mut self, node: ShowRule) {
         debug!("render_show: {:?}", node);
-        self.writer.push("show ");
+        self.writer.push("show");
         if let Some(selector) = node.selector() {
+            self.writer.push(" ");
             self.render_expr(selector);
+        } else {
+            self.writer.push(": ");
         }
         self.render_expr(node.transform());
     }
@@ -272,7 +299,7 @@ impl<'a> Renderer<'a> {
 
     fn render_linebreak(&mut self) {
         debug!("render_linebreak");
-        self.writer.push(" \\ ");
+        self.writer.push("\\");
     }
 
     fn render_escape(&mut self, node: Escape) {

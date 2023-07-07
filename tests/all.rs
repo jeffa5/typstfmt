@@ -1,13 +1,14 @@
 #[macro_use]
 mod common;
 
-test_snippet!(later, expect = "#{\n    a()[]\n}", "#{\na()[]\n}",);
+test_snippet!(codeblock_single, expect = "#{a([])}", "#{\na()[]\n}",);
+test_snippet!(codeblock_multi, expect = "#{\n    a([])\n    b([])\n}", "#{\na()[]\nb()[]\n}",);
 
 test_snippet!(let_binding, expect = "#let x = 4", "#let x=4",);
 
 test_snippet!(
     function,
-    expect = "#f(a, b, c) = {a + (b + c)}",
+    expect = "#f(\n    a,\n    b,\n    c,\n) = {a + (b + c)}",
     "#f(a, b, c) = {a + (b + c)}",
 );
 
