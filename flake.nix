@@ -20,9 +20,13 @@
           overlays = [rust-overlay.overlays.default];
           inherit system;
         };
+        lib = pkgs.lib;
         rust = pkgs.rust-bin.nightly.latest.default;
-      in
-      {
+        cargoNix = import ./Cargo.nix {inherit pkgs;};
+        workspacePackages = lib.attrsets.mapAttrs (name: value: value.build) cargoNix.workspaceMembers;
+      in {
+        packages = workspacePackages;
+
         formatter = pkgs.alejandra;
 
         devShell = pkgs.mkShell {
