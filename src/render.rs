@@ -402,7 +402,7 @@ impl<'a> Renderer<'a> {
 
     fn render_raw(&mut self, node: Raw) {
         debug!("render_raw: {:?}", node);
-        let end_str = if node.block() { "`" } else { "```" };
+        let end_str = if node.block() { "```" } else { "`" };
         self.writer.push(end_str);
         if let Some(lang) = node.lang() {
             self.writer.push(lang);
