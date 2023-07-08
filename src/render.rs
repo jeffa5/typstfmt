@@ -430,7 +430,18 @@ impl Renderable for Destructuring {
 impl Renderable for Named {
     fn render(&self, renderer: &mut Renderer) {
         debug!(?self, "rendering");
-        render_children_typed_or_text_2::<Expr, Ident>(self, renderer)
+        for child in self.as_untyped().children() {
+            if let Some(expr) = child.cast::<Expr>() {
+                expr.render(renderer);
+            }
+            else if let Some(ident) = child.cast::<Ident>() {
+                ident.render(renderer);
+            } else if child.kind() == SyntaxKind::Colon && renderer.config().spacing {
+                renderer.writer.push(": ");
+            }else {
+                render_anon(child, renderer);
+            }
+        }
     }
 }
 
