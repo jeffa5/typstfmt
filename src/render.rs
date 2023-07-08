@@ -100,8 +100,7 @@ fn render_children_typed_or_text_2<T1: Renderable, T2: Renderable>(
 impl Renderable for Markup {
     fn render(&self, renderer: &mut Renderer) {
         debug!(?self, "rendering");
-        let total = self.as_untyped().children().count();
-        for (i, child) in self.as_untyped().children().enumerate() {
+        for child in self.as_untyped().children() {
             if let Some(expr) = child.cast::<Expr>() {
                 expr.render(renderer);
             } else {
