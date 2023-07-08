@@ -15,6 +15,8 @@ test_snippet!(
     "#{\na()[]\nb()[]\n}",
 );
 
+test_snippet!(plain_text, expect = "hello world", "hello world",);
+
 test_snippet!(let_binding, expect = "#let x = 4", "#let x=4",);
 
 test_snippet!(
