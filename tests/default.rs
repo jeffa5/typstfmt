@@ -33,6 +33,12 @@ test_snippet!(
 );
 
 test_snippet!(
+    arg_indent,
+    expect = "#let f(\n    a,\n    b\n) = a + b",
+    "#let f(\na,\nb,\n) = a + b",
+);
+
+test_snippet!(
     complex,
     expect = r#"#import "template.typ": *
 #show: letter.with(

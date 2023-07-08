@@ -135,7 +135,7 @@ impl Renderable for Parbreak {
     fn render(&self, renderer: &mut Renderer) {
         debug!(?self, "rendering");
         if renderer.config().spacing {
-                renderer.writer.newline().newline_with_indent();
+            renderer.writer.newline().newline_with_indent();
         } else {
             render_anon(self.as_untyped(), renderer)
         }
@@ -630,6 +630,10 @@ fn render_params(node: &SyntaxNode, renderer: &mut Renderer) {
             if renderer.config().spacing && i + 2 < total {
                 renderer.writer.push(", ");
             }
+        } else if child.kind() == SyntaxKind::LeftParen {
+            renderer.writer.push("(").inc_indent();
+        } else if child.kind() == SyntaxKind::RightParen {
+            renderer.writer.dec_indent().push(")");
         } else if child.kind() == SyntaxKind::Comma {
             if !renderer.config().spacing {
                 render_anon(child, renderer);
