@@ -121,7 +121,11 @@ impl Renderable for Text {}
 impl Renderable for Space {
     fn render(&self, renderer: &mut Renderer) {
         debug!(?self, "rendering");
-        if !renderer.config().spacing {
+        if renderer.config().spacing {
+            if self.as_untyped().text().contains("\n") {
+                renderer.writer.newline_with_indent();
+            }
+        } else {
             render_anon(self.as_untyped(), renderer)
         }
     }
