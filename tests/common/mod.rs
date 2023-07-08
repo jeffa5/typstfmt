@@ -19,6 +19,28 @@ macro_rules! test_snippet {
 }
 
 #[allow(unused_macros)]
+macro_rules! test_snippet_reformat {
+    (
+        $test_name:ident,
+        $(ignore = $ignore:tt ,)?
+        $snippet:expr,
+    ) => {
+        #[test]
+        $(#[ignore = $ignore])?
+        fn $test_name() {
+            let _ = tracing_subscriber::fmt().with_test_writer().with_max_level(tracing::Level::DEBUG).try_init();
+            let formatted = typstfmt::format($snippet, typstfmt::Config::default()).unwrap();
+            println!("first formatting done, produced:");
+            println!("{:?}", formatted);
+            let reformatted = typstfmt::format(&formatted, typstfmt::Config::default()).unwrap();
+            println!("second formatting done, produced:");
+            println!("{:?}", reformatted);
+            similar_asserts::assert_eq!(reformatted, formatted);
+        }
+    };
+}
+
+#[allow(unused_macros)]
 macro_rules! test_snippet_unchanged {
     (
         $test_name:ident,

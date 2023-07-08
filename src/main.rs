@@ -56,12 +56,6 @@ fn main() -> anyhow::Result<()> {
         let mut content = String::with_capacity(1024);
         file.read_to_string(&mut content)?;
         drop(file);
-        let mut file = File::options()
-            .write(true)
-            .append(false)
-            .truncate(true)
-            .open(&path)?;
-        file.set_len(0)?;
 
         let config = if args.config.is_file() {
             let mut config_file = File::open(&args.config)?;
@@ -74,12 +68,13 @@ fn main() -> anyhow::Result<()> {
 
         let formatted = format(&content, config)?;
         if let Some(output) = args.output {
-            let mut file = File::open(output)?;
+            let mut file = File::create(output)?;
             file.write_all(formatted.as_bytes())?;
             break;
         }
         match args.mode {
             Mode::Format => {
+                let mut file = File::create(&path)?;
                 file.write_all(formatted.as_bytes())?;
             }
             Mode::Simulate => {

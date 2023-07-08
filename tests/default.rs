@@ -1,7 +1,11 @@
 #[macro_use]
 mod common;
 
-test_snippet!(comments, expect = "// a line comment", "// a line comment",);
+test_snippet!(
+    comments,
+    expect = "// a line comment\n",
+    "// a line comment",
+);
 
 test_snippet!(codeblock_single, expect = "#{a([])}", "#{\na()[]\n}",);
 test_snippet!(
@@ -10,7 +14,7 @@ test_snippet!(
     "#{\na()[]\nb()[]\n}",
 );
 
-test_snippet!(plain_text, expect = "hello world", "hello world",);
+test_snippet!(plain_text, expect = "hello world", "hello   world",);
 
 test_snippet!(let_binding, expect = "#let x = 4", "#let x=4",);
 

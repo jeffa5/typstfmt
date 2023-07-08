@@ -1,4 +1,5 @@
 use crate::config::Config;
+use tracing::debug;
 
 /// A context object used to store state while formatting.
 #[derive(Default)]
@@ -29,6 +30,7 @@ impl Writer {
 
     /// Appends the given text to the buffer.
     pub fn push(&mut self, s: &str) -> &mut Self {
+        debug!(?s, "push");
         self.value.push_str(s);
         self
     }

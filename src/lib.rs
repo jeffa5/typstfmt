@@ -31,6 +31,7 @@ pub enum FormatError {
 /// This first ensures that it is valid typst, returning an error if not.
 /// After validation, it traverses the Abstract Syntax Tree, applying formatting along the way.
 pub fn format(input: &str, config: Config) -> Result<String, FormatError> {
+    debug!("input: {input:?}");
     let init = parse(input);
     // don't try to format things that aren't valid
     if init.erroneous() {
@@ -38,7 +39,7 @@ pub fn format(input: &str, config: Config) -> Result<String, FormatError> {
         return Err(FormatError::ErroneousInput);
     }
     let root = LinkedNode::new(&init);
-    debug!("parsed : \n{init:?}\n");
+    debug!("parsed: {init:?}");
     let writer = Writer::new(config);
 
     let mut renderer = Renderer { writer };

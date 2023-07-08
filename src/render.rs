@@ -1,3 +1,4 @@
+use regex::Regex;
 use tracing::debug;
 use typst::syntax::{ast::*, LinkedNode, SyntaxKind, SyntaxNode};
 
@@ -99,7 +100,14 @@ fn render_children_typed_or_text_2<T1: Renderable, T2: Renderable>(
 impl Renderable for Markup {
     fn render(&self, renderer: &mut Renderer) {
         debug!(?self, "rendering");
-        render_children_typed_or_text::<Expr>(self, renderer)
+        let total = self.as_untyped().children().count();
+        for (i, child) in self.as_untyped().children().enumerate() {
+            if let Some(expr) = child.cast::<Expr>() {
+                expr.render(renderer);
+            } else {
+                render_anon(child, renderer);
+            }
+        }
     }
 }
 
@@ -132,11 +140,14 @@ impl Renderable for Space {
     fn render(&self, renderer: &mut Renderer) {
         debug!(?self, "rendering");
         if renderer.config().spacing {
-            if self.as_untyped().text().contains("\n") {
-                renderer.writer.newline_with_indent();
-            }
+            // collapse multiple spaces
+            let regex = Regex::new(" +").unwrap();
+            let s = regex
+                .replace_all(self.as_untyped().text(), " ")
+                .into_owned();
+            renderer.writer.push(&s);
         } else {
-            render_anon(self.as_untyped(), renderer)
+            renderer.writer.push(self.as_untyped().text());
         }
     }
 }
