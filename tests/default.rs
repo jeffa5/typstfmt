@@ -39,6 +39,12 @@ test_snippet!(
 );
 
 test_snippet!(
+    code_block_indent,
+    expect = "#{\n    1\n    2\n    3\n}",
+    "#{\n1\n2\n3\n}",
+);
+
+test_snippet!(
     complex,
     expect = r#"#import "template.typ": *
 #show: letter.with(

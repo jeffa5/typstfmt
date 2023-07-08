@@ -106,7 +106,17 @@ impl Renderable for Markup {
 impl Renderable for CodeBlock {
     fn render(&self, renderer: &mut Renderer) {
         debug!(?self, "rendering");
-        render_children_typed_or_text::<Code>(self, renderer)
+        for child in self.as_untyped().children() {
+            if let Some(code) = child.cast::<Code>() {
+                code.render(renderer);
+            } else if child.kind() == SyntaxKind::LeftBrace {
+                renderer.writer.push("{").inc_indent();
+            } else if child.kind() == SyntaxKind::RightBrace {
+                renderer.writer.dec_indent().push("}");
+            } else {
+                render_anon(child, renderer);
+            }
+        }
     }
 }
 
