@@ -1,7 +1,7 @@
 use tracing::debug;
 use typst::syntax::{ast::*, LinkedNode, SyntaxKind, SyntaxNode};
 
-use crate::writer::Writer;
+use crate::{writer::Writer, Config};
 
 /// Renderer that has the information for writing out.
 pub struct Renderer {
@@ -18,6 +18,10 @@ impl Renderer {
     /// Get the rendered value.
     pub fn finish(self) -> String {
         self.writer.finish()
+    }
+
+    fn config(&self) -> &Config {
+        self.writer.config()
     }
 }
 
@@ -262,9 +266,7 @@ impl Renderable for FuncCall {
             if let Some(typed) = child.cast::<Expr>() {
                 typed.render(renderer);
             } else if child.kind() == SyntaxKind::Args {
-                // TODO: can't use ArrayItem instead of Expr here because the spread variant doesn't
-                // include the dots.
-                render_children_typed_or_text_untyped_2::<Expr, Named>(child, renderer);
+                render_args(child, renderer)
             } else {
                 render_anon(child, renderer);
             }
@@ -305,9 +307,7 @@ impl Renderable for SetRule {
         debug!(?self, "rendering");
         for child in self.as_untyped().children() {
             if child.kind() == SyntaxKind::Args {
-                // TODO: can't use ArrayItem instead of Expr here because the spread variant doesn't
-                // include the dots.
-                render_children_typed_or_text_untyped_2::<Expr, Named>(child, renderer);
+                render_args(child, renderer)
             } else if let Some(typed) = child.cast::<Expr>() {
                 typed.render(renderer);
             } else {
@@ -510,6 +510,33 @@ impl Renderable for Expr {
             Expr::Break(node) => node.render(renderer),
             Expr::Continue(node) => node.render(renderer),
             Expr::Return(node) => node.render(renderer),
+        }
+    }
+}
+
+// TODO: can't use ArrayItem instead of Expr here because the spread variant doesn't
+// include the dots.
+fn render_args(node: &SyntaxNode, renderer: &mut Renderer) {
+    debug!(?node, "render_args");
+    let total = node.children().count();
+    let children = node.children();
+    for (i, child) in children.enumerate() {
+        if let Some(expr) = child.cast::<Expr>() {
+            expr.render(renderer);
+            if renderer.config().spacing && i + 2 < total {
+                renderer.writer.push(", ");
+            }
+        } else if let Some(named) = child.cast::<Named>() {
+            named.render(renderer);
+            if renderer.config().spacing && i + 2 < total {
+                renderer.writer.push(", ");
+            }
+        } else if child.kind() == SyntaxKind::Space || child.kind() == SyntaxKind::Comma {
+            if !renderer.config().spacing {
+                render_anon(child, renderer);
+            }
+        } else {
+            render_anon(child, renderer);
         }
     }
 }

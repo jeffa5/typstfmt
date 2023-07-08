@@ -22,7 +22,7 @@ test_snippet!(let_binding, expect = "#let x = 4", "#let x=4",);
 test_snippet!(
     function,
     expect = "#f(a, b, c) = {a + (b + c)}",
-    "#f(a, b, c) = {a + (b + c)}",
+    "#f(a,b,c) = {a + (b + c)}",
 );
 
 test_snippet!(

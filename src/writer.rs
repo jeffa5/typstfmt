@@ -62,6 +62,10 @@ impl Writer {
     pub fn finish(self) -> String {
         self.value
     }
+
+    pub fn config(&self) -> &Config {
+        &self.config
+    }
 }
 
 #[cfg(test)]

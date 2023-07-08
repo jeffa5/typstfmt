@@ -5,11 +5,16 @@ use serde::{Deserialize, Serialize};
 pub struct Config {
     /// The number of spaces to indent by.
     pub indent: usize,
+    /// Whether to manipulate spacing.
+    pub spacing: bool,
 }
 
 impl Default for Config {
     fn default() -> Self {
-        Config { indent: 4 }
+        Config {
+            indent: 4,
+            spacing: true,
+        }
     }
 }
 
@@ -18,6 +23,9 @@ impl Config {
     ///
     /// This is primarily used for fuzzing and testing.
     pub fn no_changes() -> Self {
-        Config { indent: 4 }
+        Config {
+            indent: 0,
+            spacing: false,
+        }
     }
 }
