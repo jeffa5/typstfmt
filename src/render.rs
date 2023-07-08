@@ -386,6 +386,8 @@ impl Renderable for ModuleImport {
                 render_children_typed_or_text_untyped::<Ident>(child, renderer);
             } else if let Some(typed) = child.cast::<Expr>() {
                 typed.render(renderer);
+            } else if child.kind() == SyntaxKind::Colon && renderer.config().spacing {
+                renderer.writer.push(": ");
             } else {
                 render_anon(child, renderer);
             }
