@@ -346,8 +346,6 @@ impl Renderable for Closure {
                 render_params(child, renderer);
             } else if let Some(typed) = child.cast::<Ident>() {
                 typed.render(renderer);
-            } else if child.kind() == SyntaxKind::Eq && renderer.config().spacing {
-                renderer.writer.push(" = ");
             } else {
                 render_anon(child, renderer);
             }
@@ -363,10 +361,6 @@ impl Renderable for LetBinding {
                 expr.render(renderer);
             } else if let Some(named) = child.cast::<Pattern>() {
                 named.render(renderer);
-            } else if child.kind() == SyntaxKind::Let && renderer.config().spacing {
-                renderer.writer.push("let ");
-            } else if child.kind() == SyntaxKind::Eq && renderer.config().spacing {
-                renderer.writer.push(" = ");
             } else {
                 render_anon(child, renderer);
             }
@@ -399,8 +393,6 @@ impl Renderable for ShowRule {
         for child in self.as_untyped().children() {
             if let Some(expr) = child.cast::<Expr>() {
                 expr.render(renderer);
-            } else if child.kind() == SyntaxKind::Colon && renderer.config().spacing {
-                renderer.writer.push(": ");
             } else {
                 render_anon(child, renderer);
             }
@@ -433,10 +425,6 @@ impl Renderable for ModuleImport {
                 render_children_typed_or_text_untyped::<Ident>(child, renderer);
             } else if let Some(typed) = child.cast::<Expr>() {
                 typed.render(renderer);
-            } else if child.kind() == SyntaxKind::Import && renderer.config().spacing {
-                renderer.writer.push("import ");
-            } else if child.kind() == SyntaxKind::Colon && renderer.config().spacing {
-                renderer.writer.push(": ");
             } else {
                 render_anon(child, renderer);
             }
