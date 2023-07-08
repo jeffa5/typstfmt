@@ -12,15 +12,16 @@ pub struct Writer {
 }
 
 impl Writer {
-    pub fn new(style: Config) -> Self {
+    /// Create a new writer with the given config.
+    pub fn new(config: Config) -> Self {
         Self {
             value: String::new(),
-            config: style,
+            config,
             indent_level: 0,
         }
     }
 
-    /// Appends the amount of spaces defined by the style.
+    /// Push the current indentation amount.
     pub fn indent(&mut self) -> &mut Self {
         self.push(&" ".repeat(self.indent_level));
         self

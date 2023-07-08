@@ -3,6 +3,7 @@ use typst::syntax::{ast::*, LinkedNode, SyntaxKind, SyntaxNode};
 
 use crate::writer::Writer;
 
+/// Renderer that has the information for writing out.
 pub struct Renderer {
     pub writer: Writer,
 }
