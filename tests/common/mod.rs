@@ -27,7 +27,7 @@ macro_rules! test_snippet_unchanged {
         $(#[ignore = $ignore])?
         fn $test_name() {
             let _ = tracing_subscriber::fmt().with_test_writer().with_max_level(tracing::Level::DEBUG).try_init();
-            let formatted = typstfmt::format($snippet, typstfmt::Config::default()).unwrap();
+            let formatted = typstfmt::format($snippet, typstfmt::Config::no_changes()).unwrap();
             similar_asserts::assert_eq!(&formatted, $snippet);
         }
     };
