@@ -28,9 +28,13 @@ impl Renderer {
 /// Render all text from a general syntax node.
 fn render_anon(node: &SyntaxNode, renderer: &mut Renderer) {
     debug!(?node, "render_anon");
-    renderer.writer.push(&node.text());
-    for child in node.children() {
-        render_anon(child, renderer)
+    if let Some(space) = node.cast::<Space>() {
+        space.render(renderer);
+    } else {
+        renderer.writer.push(&node.text());
+        for child in node.children() {
+            render_anon(child, renderer)
+        }
     }
 }
 
@@ -114,7 +118,14 @@ impl Renderable for Code {
 }
 
 impl Renderable for Text {}
-impl Renderable for Space {}
+impl Renderable for Space {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        if !renderer.config().spacing {
+            render_anon(self.as_untyped(), renderer)
+        }
+    }
+}
 impl Renderable for Linebreak {}
 impl Renderable for Parbreak {}
 impl Renderable for Escape {}
@@ -250,7 +261,15 @@ impl Renderable for Unary {
 impl Renderable for Binary {
     fn render(&self, renderer: &mut Renderer) {
         debug!(?self, "rendering");
-        render_children_typed_or_text::<Expr>(self, renderer)
+        for child in self.as_untyped().children() {
+            if let Some(expr) = child.cast::<Expr>() {
+                expr.render(renderer);
+            } else if BinOp::from_kind(child.kind()).is_some() && renderer.config().spacing {
+                renderer.writer.push(" ").push(&child.text()).push(" ");
+            } else {
+                render_anon(child, renderer)
+            }
+        }
     }
 }
 impl Renderable for FieldAccess {
@@ -281,9 +300,11 @@ impl Renderable for Closure {
             if let Some(typed) = child.cast::<Expr>() {
                 typed.render(renderer);
             } else if child.kind() == SyntaxKind::Params {
-                render_children_typed_or_text_untyped::<Param>(child, renderer)
+                render_params(child, renderer);
             } else if let Some(typed) = child.cast::<Ident>() {
                 typed.render(renderer);
+            } else if child.kind() == SyntaxKind::Eq && renderer.config().spacing {
+                renderer.writer.push(" = ");
             } else {
                 render_anon(child, renderer);
             }
@@ -293,7 +314,20 @@ impl Renderable for Closure {
 impl Renderable for LetBinding {
     fn render(&self, renderer: &mut Renderer) {
         debug!(?self, "rendering");
-        render_children_typed_or_text_2::<Pattern, Expr>(self, renderer)
+        let children = self.as_untyped().children();
+        for child in children {
+            if let Some(expr) = child.cast::<Expr>() {
+                expr.render(renderer);
+            } else if let Some(named) = child.cast::<Pattern>() {
+                named.render(renderer);
+            } else if child.kind() == SyntaxKind::Let && renderer.config().spacing {
+                renderer.writer.push("let ");
+            } else if child.kind() == SyntaxKind::Eq && renderer.config().spacing {
+                renderer.writer.push(" = ");
+            } else {
+                render_anon(child, renderer);
+            }
+        }
     }
 }
 impl Renderable for DestructAssignment {
@@ -531,7 +565,27 @@ fn render_args(node: &SyntaxNode, renderer: &mut Renderer) {
             if renderer.config().spacing && i + 2 < total {
                 renderer.writer.push(", ");
             }
-        } else if child.kind() == SyntaxKind::Space || child.kind() == SyntaxKind::Comma {
+        } else if child.kind() == SyntaxKind::Comma {
+            if !renderer.config().spacing {
+                render_anon(child, renderer);
+            }
+        } else {
+            render_anon(child, renderer);
+        }
+    }
+}
+
+fn render_params(node: &SyntaxNode, renderer: &mut Renderer) {
+    debug!(?node, "render_params");
+    let total = node.children().count();
+    let children = node.children();
+    for (i, child) in children.enumerate() {
+        if let Some(param) = child.cast::<Param>() {
+            param.render(renderer);
+            if renderer.config().spacing && i + 2 < total {
+                renderer.writer.push(", ");
+            }
+        } else if child.kind() == SyntaxKind::Comma {
             if !renderer.config().spacing {
                 render_anon(child, renderer);
             }
