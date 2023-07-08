@@ -1,5 +1,23 @@
 {
   "nodes": {
+    "crate2nix": {
+      "inputs": {
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1685700212,
+        "narHash": "sha256-rEuQajp1aBkH163tWmL/Coj8GFyE8rh3hea3K+v5w6g=",
+        "owner": "jeffa5",
+        "repo": "crate2nix",
+        "rev": "a760ff9c9130bef8bbceb3463fa6adfff8a7da3b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jeffa5",
+        "repo": "crate2nix",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -38,6 +56,20 @@
     },
     "nixpkgs": {
       "locked": {
+        "lastModified": 1685677062,
+        "narHash": "sha256-zoHF7+HNwNwne2XEomphbdc4Y8tdWT16EUxUTXpOKpQ=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "95be94370d09f97f6af6a1df1eb9649b5260724e",
+        "type": "github"
+      },
+      "original": {
+        "id": "nixpkgs",
+        "type": "indirect"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
         "lastModified": 1688500189,
         "narHash": "sha256-djYYiY4lzJOlXOnTHytH6BUugrxHDZjuGxTSrU4gt4M=",
         "owner": "nixos",
@@ -52,7 +84,7 @@
         "type": "github"
       }
     },
-    "nixpkgs_2": {
+    "nixpkgs_3": {
       "locked": {
         "lastModified": 1681358109,
         "narHash": "sha256-eKyxW4OohHQx9Urxi7TQlFBTDWII+F+x2hklDOQPB50=",
@@ -70,15 +102,16 @@
     },
     "root": {
       "inputs": {
+        "crate2nix": "crate2nix",
         "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs",
+        "nixpkgs": "nixpkgs_2",
         "rust-overlay": "rust-overlay"
       }
     },
     "rust-overlay": {
       "inputs": {
         "flake-utils": "flake-utils_2",
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs_3"
       },
       "locked": {
         "lastModified": 1688610886,

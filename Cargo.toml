@@ -6,10 +6,6 @@ authors = ["Andrew Jeffery <dev@jeffas.io>"]
 repository = "https://github.com/jeffa5/typstfmt"
 license = "MIT"
 
-[[bin]]
-name = "typstfmt"
-path = "src/main.rs"
-
 [dependencies]
 anyhow = "1.0.71"
 clap = { version = "4.2.0", features = ["derive"] }
