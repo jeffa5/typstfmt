@@ -10,6 +10,7 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
+typst = { git = "https://github.com/typst/typst.git", rev = "v0.6.0" }
 
 [dependencies.typstfmt]
 path = ".."
@@ -21,5 +22,11 @@ members = ["."]
 [[bin]]
 name = "crash_proof"
 path = "fuzz_targets/crash_proof.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "nofmt_unchanged"
+path = "fuzz_targets/nofmt_unchanged.rs"
 test = false
 doc = false

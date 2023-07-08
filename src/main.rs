@@ -37,7 +37,7 @@ enum Mode {
     Simulate,
 }
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let args = Args::parse();
     if args.output.is_some() && args.input.is_none() {
         panic!("Input must be specified to use an output.")
@@ -54,39 +54,33 @@ fn main() {
             .open(&path)
             .unwrap_or_else(|e| panic!("Couldn't open input file : {e}"));
         let mut content = String::with_capacity(1024);
-        file.read_to_string(&mut content).unwrap();
+        file.read_to_string(&mut content)?;
         drop(file);
         let mut file = File::options()
             .write(true)
             .append(false)
             .truncate(true)
-            .open(&path)
-            .unwrap();
-        file.set_len(0).unwrap();
+            .open(&path)?;
+        file.set_len(0)?;
 
         let config = if args.config.is_file() {
-            let mut config_file = File::open(&args.config).unwrap();
+            let mut config_file = File::open(&args.config)?;
             let mut config_file_content = String::new();
-            config_file
-                .read_to_string(&mut config_file_content)
-                .unwrap();
-            toml::from_str(&config_file_content).unwrap()
+            config_file.read_to_string(&mut config_file_content)?;
+            toml::from_str(&config_file_content)?
         } else {
             typstfmt::Config::default()
         };
 
-        let formatted = format(&content, config);
+        let formatted = format(&content, config)?;
         if let Some(output) = args.output {
-            let mut file =
-                File::open(output).unwrap_or_else(|op| panic!("Couldn't open output file: {op}"));
-            file.write_all(formatted.as_bytes())
-                .unwrap_or_else(|op| panic!("Couldn't write in the output: {op}"));
+            let mut file = File::open(output)?;
+            file.write_all(formatted.as_bytes())?;
             break;
         }
         match args.mode {
             Mode::Format => {
-                file.write_all(formatted.as_bytes())
-                    .unwrap_or_else(|op| panic!("Couldn't write in file at {path:?}: {op}"));
+                file.write_all(formatted.as_bytes())?;
             }
             Mode::Simulate => {
                 let spath = path
@@ -94,11 +88,10 @@ fn main() {
                     .unwrap_or(&PathBuf::default())
                     .join(path.file_stem().unwrap())
                     .join(&PathBuf::from("__simulate__.typ"));
-                let mut file = File::create(&spath)
-                    .unwrap_or_else(|e| panic!("Couldn't open input file : {e}"));
-                file.write_all(formatted.as_bytes())
-                    .unwrap_or_else(|op| panic!("Couldn't write in file at {path:?}: {op}"));
+                let mut file = File::create(&spath)?;
+                file.write_all(formatted.as_bytes())?;
             }
         }
     }
+    Ok(())
 }

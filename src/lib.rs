@@ -1,4 +1,4 @@
-use log::info;
+use tracing::debug;
 use typst::syntax::{parse, LinkedNode};
 
 mod config;
@@ -9,14 +9,25 @@ pub use config::Config;
 use render::Renderer;
 use writer::Writer;
 
-pub fn format(s: &str, config: Config) -> String {
+#[derive(Debug, thiserror::Error)]
+pub enum FormatError {
+    #[error("The input contained errors, not formatting")]
+    ErroneousInput,
+}
+
+pub fn format(s: &str, config: Config) -> Result<String, FormatError> {
     let init = parse(s);
+    // don't try to format things that aren't valid
+    if init.erroneous() {
+        debug!("Not formatting erroneous input");
+        return Err(FormatError::ErroneousInput);
+    }
     let root = LinkedNode::new(&init);
-    info!("parsed : \n{init:?}\n");
+    debug!("parsed : \n{init:?}\n");
     let writer = Writer::new(config);
 
     let mut renderer = Renderer { writer };
     renderer.render(root);
 
-    renderer.finish()
+    Ok(renderer.finish())
 }

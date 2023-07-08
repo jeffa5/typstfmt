@@ -87,9 +87,7 @@ mod tests {
             .push("a,")
             .newline_with_indent()
             .push("b")
-            .dec_indent();
-        dbg!(&writer.indent_level);
-        writer
+            .dec_indent()
             .newline_with_indent()
             .push(")");
         similar_asserts::assert_eq!(

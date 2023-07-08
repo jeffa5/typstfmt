@@ -1,5 +1,5 @@
-use log::debug;
-use typst::syntax::{ast::*, LinkedNode, SyntaxKind};
+use tracing::debug;
+use typst::syntax::{ast::*, LinkedNode, SyntaxKind, SyntaxNode};
 
 use crate::writer::Writer;
 
@@ -10,643 +10,505 @@ pub struct Renderer {
 impl Renderer {
     /// Render the AST from the given node.
     pub fn render(&mut self, node: LinkedNode) {
-        debug!("render: {:?}", node);
-        match node.kind() {
-            SyntaxKind::CodeBlock => self.render_code_block(node.cast().unwrap()),
-            SyntaxKind::Markup => self.render_markup(node.cast().unwrap()),
-            kind => todo!("Render {:?}", kind),
-        }
+        debug!(?node, "render");
+        node.cast::<Markup>().unwrap().render(self)
     }
 
     /// Get the rendered value.
     pub fn finish(self) -> String {
         self.writer.finish()
     }
+}
 
-    fn render_markup(&mut self, node: Markup) {
-        debug!("render_markup: {:?}", node);
-        for expr in node.exprs() {
-            if expr.hashtag() {
-                self.writer.push("#");
-            }
-            self.render_expr(expr);
-        }
+/// Render all text from a general syntax node.
+fn render_anon(node: &SyntaxNode, renderer: &mut Renderer) {
+    debug!(?node, "render_anon");
+    renderer.writer.push(&node.text());
+    for child in node.children() {
+        render_anon(child, renderer)
     }
+}
 
-    fn render_code_block(&mut self, node: CodeBlock) {
-        debug!("render_code_block: {:?}", node);
-        self.writer.push("{");
-        self.render_code(node.body());
-        self.writer.push("}");
+/// An AstNode that we can render.
+trait Renderable: AstNode + std::fmt::Debug {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_anon(self.as_untyped(), renderer)
     }
+}
 
-    fn render_code(&mut self, node: Code) {
-        debug!("render_code: {:?}", node);
-        let total = node.exprs().count();
-        let multiline = total > 1;
-        self.writer.inc_indent();
-        if multiline {
-            self.writer.newline_with_indent();
-        }
-        for (i, expr) in node.exprs().enumerate() {
-            self.render_expr(expr);
-            if i + 1 == total {
-                // last element
-                self.writer.dec_indent();
-            }
-            if multiline {
-                self.writer.newline_with_indent();
-            }
-        }
+fn render_typed_or_text<T: Renderable>(node: &SyntaxNode, renderer: &mut Renderer) {
+    if let Some(typed) = node.cast::<T>() {
+        typed.render(renderer);
+    } else {
+        render_anon(node, renderer)
     }
+}
 
-    fn render_expr(&mut self, node: Expr) {
-        debug!("render_expr: {:?}", node);
-        match node {
-            Expr::Text(text) => self.render_text(text),
-            Expr::Space(space) => self.render_space(space),
-            Expr::Linebreak(_) => self.render_linebreak(),
-            Expr::Parbreak(parbreak) => self.render_parbreak(parbreak),
-            Expr::Escape(escape) => self.render_escape(escape),
-            Expr::Shorthand(shorthand) => self.render_shorthand(shorthand),
-            Expr::SmartQuote(quote) => self.render_smart_quote(quote),
-            Expr::Strong(strong) => self.render_strong(strong),
-            Expr::Emph(emph) => self.render_emph(emph),
-            Expr::Raw(raw) => self.render_raw(raw),
-            Expr::Link(link) => self.render_link(link),
-            Expr::Label(label) => self.render_label(label),
-            Expr::Ref(reff) => self.render_ref(reff),
-            Expr::Heading(heading) => self.render_heading(heading),
-            Expr::List(list) => self.render_list(list),
-            Expr::Enum(en) => self.render_enum(en),
-            Expr::Term(term) => self.render_term(term),
-            Expr::Equation(eq) => self.render_equation(eq),
-            Expr::Math(m) => self.render_math(m),
-            Expr::MathIdent(mi) => self.render_math_ident(mi),
-            Expr::MathAlignPoint(map) => self.render_math_align_point(map),
-            Expr::MathDelimited(md) => self.render_math_delimited(md),
-            Expr::MathAttach(ma) => self.render_math_attach(ma),
-            Expr::MathFrac(mf) => self.render_math_frac(mf),
-            Expr::MathRoot(mr) => self.render_math_root(mr),
-            Expr::Ident(ident) => self.render_ident(ident),
-            Expr::None(_) => self.render_none(),
-            Expr::Auto(_) => self.render_auto(),
-            Expr::Bool(b) => self.render_bool(b),
-            Expr::Int(int) => self.render_int(int),
-            Expr::Float(f) => self.render_float(f),
-            Expr::Numeric(n) => self.render_numeric(n),
-            Expr::Str(string) => self.render_string(string),
-            Expr::Code(code) => self.render_code_block(code),
-            Expr::Content(content) => self.render_content_block(content),
-            Expr::Parenthesized(p) => self.render_parenthesized(p),
-            Expr::Array(a) => self.render_array(a),
-            Expr::Dict(d) => self.render_dict(d),
-            Expr::Unary(unary) => self.render_unary(unary),
-            Expr::Binary(binary) => self.render_binary(binary),
-            Expr::FieldAccess(field_access) => self.render_field_access(field_access),
-            Expr::FuncCall(func_call) => self.render_func_call(func_call),
-            Expr::Closure(c) => self.render_closure(c),
-            Expr::Let(expr) => self.render_let(expr),
-            Expr::DestructAssign(da) => self.render_destruct_assign(da),
-            Expr::Set(s) => self.render_set(s),
-            Expr::Show(show) => self.render_show(show),
-            Expr::Conditional(c) => self.render_conditional(c),
-            Expr::While(w) => self.render_while(w),
-            Expr::For(f) => self.render_for(f),
-            Expr::Import(import) => self.render_import(import),
-            Expr::Include(include) => self.render_include(include),
-            Expr::Break(_) => self.render_break(),
-            Expr::Continue(_) => self.render_continue(),
-            Expr::Return(ret) => self.render_return(ret),
-        }
+fn render_typed_or_text_2<T1: Renderable, T2: Renderable>(
+    node: &SyntaxNode,
+    renderer: &mut Renderer,
+) {
+    if let Some(typed) = node.cast::<T1>() {
+        typed.render(renderer);
+    } else if let Some(typed) = node.cast::<T2>() {
+        typed.render(renderer);
+    } else {
+        render_anon(node, renderer)
     }
+}
 
-    fn render_let(&mut self, node: LetBinding) {
-        debug!("render_let: {:?}", node);
-        self.writer.push("let ");
-        match node.kind() {
-            LetBindingKind::Normal(pattern) => {
-                self.render_pattern(pattern);
-            }
-            LetBindingKind::Closure(closure) => {
-                self.render_ident(closure);
-            }
-        }
-        self.writer.push(" = ");
-        if let Some(expr) = node.init() {
-            self.render_expr(expr);
-        }
+fn render_children_typed_or_text_untyped<T: Renderable>(
+    node: &SyntaxNode,
+    renderer: &mut Renderer,
+) {
+    for child in node.children() {
+        render_typed_or_text::<T>(child, renderer)
     }
+}
 
-    fn render_pattern(&mut self, node: Pattern) {
-        debug!("render_pattern: {:?}", node);
-        match node {
-            Pattern::Normal(expr) => self.render_expr(expr),
-            Pattern::Placeholder(_) => self.render_underscore(),
-            Pattern::Destructuring(destructuring) => self.render_destructuring(destructuring),
-        }
+fn render_children_typed_or_text<T: Renderable>(node: &impl AstNode, renderer: &mut Renderer) {
+    render_children_typed_or_text_untyped::<T>(node.as_untyped(), renderer)
+}
+
+fn render_children_typed_or_text_untyped_2<T1: Renderable, T2: Renderable>(
+    node: &SyntaxNode,
+    renderer: &mut Renderer,
+) {
+    for child in node.children() {
+        render_typed_or_text_2::<T1, T2>(child, renderer)
     }
+}
 
-    fn render_underscore(&mut self) {
-        debug!("render_underscore");
-        self.writer.push("_");
+fn render_children_typed_or_text_2<T1: Renderable, T2: Renderable>(
+    node: &impl AstNode,
+    renderer: &mut Renderer,
+) {
+    render_children_typed_or_text_untyped_2::<T1, T2>(node.as_untyped(), renderer)
+}
+
+impl Renderable for Markup {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Expr>(self, renderer)
     }
+}
 
-    fn render_destructuring(&mut self, node: Destructuring) {
-        debug!("render_destructuring: {:?}", node);
-        for ident in node.idents() {
-            self.render_ident(ident);
-        }
+impl Renderable for CodeBlock {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Code>(self, renderer)
     }
+}
 
-    fn render_ident(&mut self, node: Ident) {
-        debug!("render_ident: {:?}", node);
-        self.writer.push(node.as_str());
+impl Renderable for Code {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Expr>(self, renderer)
     }
+}
 
-    fn render_int(&mut self, node: Int) {
-        debug!("render_int: {:?}", node);
-        self.writer.push(&node.get().to_string());
+impl Renderable for Text {}
+impl Renderable for Space {}
+impl Renderable for Linebreak {}
+impl Renderable for Parbreak {}
+impl Renderable for Escape {}
+impl Renderable for Shorthand {}
+impl Renderable for SmartQuote {}
+impl Renderable for Strong {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Markup>(self, renderer)
     }
-
-    fn render_func_call(&mut self, node: FuncCall) {
-        debug!("render_func_call: {:?}", node);
-        self.render_expr(node.callee());
-        self.render_args(node.args());
+}
+impl Renderable for Emph {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Markup>(self, renderer)
     }
-
-    fn render_args(&mut self, node: Args) {
-        debug!("render_args: {:?}", node);
-        let total = node.items().count();
-        self.writer.push("(");
-        self.writer.inc_indent();
-        let multiline = total > 1;
-        if multiline {
-            self.writer.newline_with_indent();
-        }
-        for (i, item) in node.items().enumerate() {
-            self.render_arg(item);
-            if multiline {
-                self.writer.push(",");
-            }
-            if i + 1 == total {
-                // last element
-                self.writer.dec_indent();
-            } else if !multiline {
-                self.writer.push(" ");
-            }
-            if multiline {
-                self.writer.newline_with_indent();
-            }
-        }
-        self.writer.push(")");
+}
+impl Renderable for Raw {}
+impl Renderable for Link {}
+impl Renderable for Label {}
+impl Renderable for Ref {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<ContentBlock>(self, renderer)
     }
-
-    fn render_arg(&mut self, node: Arg) {
-        debug!("render_arg: {:?}", node);
-        match node {
-            Arg::Pos(expr) => self.render_expr(expr),
-            Arg::Named(named) => self.render_named(named),
-            Arg::Spread(expr) => self.render_expr(expr),
-        }
+}
+impl Renderable for Heading {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Markup>(self, renderer)
     }
-
-    fn render_named(&mut self, node: Named) {
-        debug!("render_named: {:?}", node);
-        self.render_ident(node.name());
-        self.writer.push(": ");
-        self.render_expr(node.expr());
+}
+impl Renderable for ListItem {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Markup>(self, renderer)
     }
-
-    fn render_space(&mut self, node: Space) {
-        debug!("render_space: {:?}", node);
-        self.writer.push(node.as_untyped().text());
+}
+impl Renderable for EnumItem {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Markup>(self, renderer)
     }
-
-    fn render_text(&mut self, node: Text) {
-        debug!("render_text: {:?}", node);
-        self.writer.push(node.get());
+}
+impl Renderable for TermItem {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Markup>(self, renderer)
     }
+}
 
-    fn render_string(&mut self, node: Str) {
-        debug!("render_string: {:?}", node);
-        self.writer.push("\"").push(&node.get()).push("\"");
+impl Renderable for Equation {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Math>(self, renderer)
     }
+}
 
-    fn render_strong(&mut self, node: Strong) {
-        debug!("render_strong: {:?}", node);
-        self.writer.push("*");
-        self.render_markup(node.body());
-        self.writer.push("*");
+impl Renderable for Math {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Expr>(self, renderer)
     }
+}
 
-    fn render_emph(&mut self, node: Emph) {
-        debug!("render_emph: {:?}", node);
-        self.writer.push("_");
-        self.render_markup(node.body());
-        self.writer.push("_");
+impl Renderable for MathIdent {}
+impl Renderable for MathAlignPoint {}
+impl Renderable for MathDelimited {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text_2::<Expr, Math>(self, renderer)
     }
-
-    fn render_parbreak(&mut self, node: Parbreak) {
-        debug!("render_parbreak: {:?}", node);
-        self.writer.newline().newline();
+}
+impl Renderable for MathAttach {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Expr>(self, renderer)
     }
-
-    fn render_content_block(&mut self, node: ContentBlock) {
-        debug!("render_content_block: {:?}", node);
-        self.writer.push("[");
-        self.render_markup(node.body());
-        self.writer.push("]");
+}
+impl Renderable for MathFrac {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Expr>(self, renderer)
     }
-
-    fn render_import(&mut self, node: ModuleImport) {
-        debug!("render_import: {:?}", node);
-        self.writer.push("import ");
-        self.render_expr(node.source());
-        if let Some(imports) = node.imports() {
-            self.writer.push(": ");
-            self.render_imports(imports);
-        }
-        self.writer.newline();
+}
+impl Renderable for MathRoot {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Expr>(self, renderer)
     }
+}
+impl Renderable for Ident {}
+impl Renderable for None {}
+impl Renderable for Auto {}
+impl Renderable for Bool {}
+impl Renderable for Int {}
+impl Renderable for Float {}
+impl Renderable for Numeric {}
+impl Renderable for Str {}
 
-    fn render_imports(&mut self, node: Imports) {
-        debug!("render_imports: {:?}", node);
-        match node {
-            Imports::Wildcard => {
-                self.writer.push("*");
-            }
-            Imports::Items(items) => {
-                for item in items {
-                    self.render_ident(item);
-                }
+impl Renderable for ContentBlock {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Markup>(self, renderer)
+    }
+}
+impl Renderable for Parenthesized {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Expr>(self, renderer)
+    }
+}
+impl Renderable for Array {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        // TODO: can't use ArrayItem instead of Expr here because the spread variant doesn't
+        // include the dots.
+        render_children_typed_or_text::<Expr>(self, renderer)
+    }
+}
+impl Renderable for Dict {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<DictItem>(self, renderer)
+    }
+}
+impl Renderable for Unary {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Expr>(self, renderer)
+    }
+}
+impl Renderable for Binary {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Expr>(self, renderer)
+    }
+}
+impl Renderable for FieldAccess {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text_2::<Expr, Ident>(self, renderer)
+    }
+}
+impl Renderable for FuncCall {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        for child in self.as_untyped().children() {
+            if let Some(typed) = child.cast::<Expr>() {
+                typed.render(renderer);
+            } else if child.kind() == SyntaxKind::Args {
+                // TODO: can't use ArrayItem instead of Expr here because the spread variant doesn't
+                // include the dots.
+                render_children_typed_or_text_untyped_2::<Expr, Named>(child, renderer);
+            } else {
+                render_anon(child, renderer);
             }
         }
     }
+}
 
-    fn render_show(&mut self, node: ShowRule) {
-        debug!("render_show: {:?}", node);
-        self.writer.push("show");
-        if let Some(selector) = node.selector() {
-            self.writer.push(" ");
-            self.render_expr(selector);
-        } else {
-            self.writer.push(": ");
-        }
-        self.render_expr(node.transform());
-    }
-
-    fn render_field_access(&mut self, node: FieldAccess) {
-        debug!("render_field_access: {:?}", node);
-        self.render_expr(node.target());
-        self.writer.push(".");
-        self.render_ident(node.field());
-    }
-
-    fn render_linebreak(&mut self) {
-        debug!("render_linebreak");
-        self.writer.push("\\");
-    }
-
-    fn render_escape(&mut self, node: Escape) {
-        debug!("render_escape: {:?}", node);
-        self.writer.push(node.as_untyped().text());
-    }
-
-    fn render_smart_quote(&mut self, node: SmartQuote) {
-        debug!("render_smart_quote: {:?}", node);
-        if node.double() {
-            self.writer.push("\"");
-        } else {
-            self.writer.push("'");
-        }
-    }
-
-    fn render_link(&mut self, node: Link) {
-        debug!("render_link: {:?}", node);
-        self.writer.push(node.get());
-    }
-
-    fn render_label(&mut self, node: Label) {
-        debug!("render_label: {:?}", node);
-        self.writer.push("<").push(node.get()).push(">");
-    }
-
-    fn render_none(&mut self) {
-        debug!("render_none");
-        self.writer.push("none");
-    }
-
-    fn render_auto(&mut self) {
-        debug!("render_auto");
-        self.writer.push("auto");
-    }
-
-    fn render_bool(&mut self, node: Bool) {
-        debug!("render_bool: {:?}", node);
-        if node.get() {
-            self.writer.push("true");
-        } else {
-            self.writer.push("false");
-        }
-    }
-
-    fn render_float(&mut self, node: Float) {
-        debug!("render_float: {:?}", node);
-        self.writer.push(&node.get().to_string());
-    }
-
-    fn render_shorthand(&mut self, node: Shorthand) {
-        debug!("render_shorthand: {:?}", node);
-        self.writer.push(&node.get().to_string());
-    }
-
-    fn render_heading(&mut self, node: Heading) {
-        debug!("render_heading: {:?}", node);
-        self.writer.push(&"=".repeat(node.level().get()));
-        self.writer.push(" ");
-        self.render_markup(node.body())
-    }
-
-    fn render_unary(&mut self, node: Unary) {
-        debug!("render_unary: {:?}", node);
-        self.writer.push(node.op().as_str());
-        self.render_expr(node.expr());
-    }
-
-    fn render_binary(&mut self, node: Binary) {
-        debug!("render_binary: {:?}", node);
-        self.render_expr(node.lhs());
-        self.writer.push(node.op().as_str());
-        self.render_expr(node.rhs());
-    }
-
-    fn render_include(&mut self, node: ModuleInclude) {
-        debug!("render_include: {:?}", node);
-        self.writer.push("include \"");
-        self.render_expr(node.source());
-        self.writer.push("\"");
-    }
-
-    fn render_break(&mut self) {
-        debug!("render_break");
-        self.writer.push("break");
-    }
-
-    fn render_continue(&mut self) {
-        debug!("render_continue");
-        self.writer.push("continue");
-    }
-
-    fn render_return(&mut self, node: FuncReturn) {
-        debug!("render_return: {:?}", node);
-        self.writer.push("return");
-        if let Some(body) = node.body() {
-            self.render_expr(body);
-        }
-    }
-
-    fn render_raw(&mut self, node: Raw) {
-        debug!("render_raw: {:?}", node);
-        let end_str = if node.block() { "```" } else { "`" };
-        self.writer.push(end_str);
-        if let Some(lang) = node.lang() {
-            self.writer.push(lang);
-        }
-        self.writer.push(&node.text());
-        self.writer.push(end_str);
-    }
-
-    fn render_ref(&mut self, node: Ref) {
-        debug!("render_ref: {:?}", node);
-        self.writer.push("@");
-        self.writer.push(node.target());
-        if let Some(supp) = node.supplement() {
-            self.render_content_block(supp);
-        }
-    }
-
-    fn render_list(&mut self, node: ListItem) {
-        debug!("render_list: {:?}", node);
-        self.writer.push("- ");
-        self.render_markup(node.body());
-    }
-
-    fn render_enum(&mut self, node: EnumItem) {
-        debug!("render_enum: {:?}", node);
-        if let Some(number) = node.number() {
-            self.writer.push(&number.to_string());
-        } else {
-            self.writer.push("+");
-        }
-        self.writer.push(" ");
-        self.render_markup(node.body());
-    }
-
-    fn render_term(&mut self, node: TermItem) {
-        debug!("render_term: {:?}", node);
-        self.writer.push("/ ");
-        self.render_markup(node.term());
-        self.writer.push(": ");
-        self.render_markup(node.description());
-    }
-
-    fn render_equation(&mut self, node: Equation) {
-        debug!("render_equation: {:?}", node);
-        self.writer.push("$");
-        if node.block() {
-            self.writer.push(" ");
-        }
-        self.render_math(node.body());
-        if node.block() {
-            self.writer.push(" ");
-        }
-        self.writer.push("$");
-    }
-
-    fn render_math(&mut self, node: Math) {
-        debug!("render_math: {:?}", node);
-        for expr in node.exprs() {
-            self.render_expr(expr)
-        }
-    }
-
-    fn render_math_ident(&mut self, node: MathIdent) {
-        debug!("render_math_ident: {:?}", node);
-        self.writer.push(node.as_str());
-    }
-
-    fn render_math_align_point(&mut self, node: MathAlignPoint) {
-        debug!("render_math_align_point: {:?}", node);
-        self.writer.push("&");
-    }
-
-    fn render_math_delimited(&mut self, node: MathDelimited) {
-        debug!("render_math_delimited: {:?}", node);
-        self.render_expr(node.open());
-        self.render_math(node.body());
-        self.render_expr(node.close());
-    }
-
-    fn render_math_attach(&mut self, node: MathAttach) {
-        debug!("render_math_attach: {:?}", node);
-        self.render_expr(node.base());
-        if let Some(bottom) = node.bottom() {
-            self.render_expr(bottom);
-        }
-        if let Some(top) = node.top() {
-            self.render_expr(top);
-        }
-    }
-
-    fn render_math_frac(&mut self, node: MathFrac) {
-        debug!("render_math_frac: {:?}", node);
-        self.render_expr(node.num());
-        self.writer.push("/");
-        self.render_expr(node.denom());
-    }
-
-    fn render_math_root(&mut self, node: MathRoot) {
-        debug!("render_math_root: {:?}", node);
-        let sym = match node.index() {
-            Some(4) => "∜",
-            Some(3) => "∛",
-            Some(2) => "√",
-            _ => "",
-        };
-        self.writer.push(sym);
-        self.render_expr(node.radicand());
-    }
-
-    fn render_numeric(&mut self, node: Numeric) {
-        debug!("render_numeric: {:?}", node);
-        self.writer.push(node.as_untyped().text());
-    }
-
-    fn render_parenthesized(&mut self, node: Parenthesized) {
-        debug!("render_parenthesized: {:?}", node);
-        self.writer.push("(");
-        self.render_expr(node.expr());
-        self.writer.push(")");
-    }
-
-    fn render_array(&mut self, node: Array) {
-        debug!("render_array: {:?}", node);
-        self.writer.push("(");
-        for item in node.items() {
-            match item {
-                ArrayItem::Pos(expr) => self.render_expr(expr),
-                ArrayItem::Spread(expr) => self.render_expr(expr),
+impl Renderable for Closure {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        for child in self.as_untyped().children() {
+            if let Some(typed) = child.cast::<Expr>() {
+                typed.render(renderer);
+            } else if child.kind() == SyntaxKind::Params {
+                render_children_typed_or_text_untyped::<Param>(child, renderer)
+            } else if let Some(typed) = child.cast::<Ident>() {
+                typed.render(renderer);
+            } else {
+                render_anon(child, renderer);
             }
         }
-        self.writer.push(")");
     }
-
-    fn render_dict(&mut self, node: Dict) {
-        debug!("render_dict: {:?}", node);
-        self.writer.push("(");
-        for item in node.items() {
-            match item {
-                DictItem::Named(n) => self.render_named(n),
-                DictItem::Keyed(k) => self.render_keyed(k),
-                DictItem::Spread(e) => self.render_expr(e),
+}
+impl Renderable for LetBinding {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text_2::<Pattern, Expr>(self, renderer)
+    }
+}
+impl Renderable for DestructAssignment {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text_2::<Pattern, Expr>(self, renderer)
+    }
+}
+impl Renderable for SetRule {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        for child in self.as_untyped().children() {
+            if child.kind() == SyntaxKind::Args {
+                // TODO: can't use ArrayItem instead of Expr here because the spread variant doesn't
+                // include the dots.
+                render_children_typed_or_text_untyped_2::<Expr, Named>(child, renderer);
+            } else if let Some(typed) = child.cast::<Expr>() {
+                typed.render(renderer);
+            } else {
+                render_anon(child, renderer);
             }
         }
-        self.writer.push(")");
     }
-
-    fn render_keyed(&mut self, node: Keyed) {
-        debug!("render_keyed: {:?}", node);
-        self.render_string(node.key());
-        self.writer.push(": ");
-        self.render_expr(node.expr());
+}
+impl Renderable for ShowRule {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Expr>(self, renderer)
     }
-
-    fn render_closure(&mut self, node: Closure) {
-        debug!("render_closure: {:?}", node);
-        self.render_params(node.params());
-        self.writer.push(" => ");
-        self.render_expr(node.body());
+}
+impl Renderable for Conditional {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Expr>(self, renderer)
     }
-
-    fn render_params(&mut self, node: Params) {
-        debug!("render_params: {:?}", node);
-        self.writer.push("(");
-        for child in node.children() {
-            self.render_param(child);
-            self.writer.push(",");
-        }
-        self.writer.push(")");
+}
+impl Renderable for WhileLoop {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Expr>(self, renderer)
     }
-
-    fn render_param(&mut self, node: Param) {
-        debug!("render_param: {:?}", node);
-        match node {
-            Param::Pos(p) => self.render_pattern(p),
-            Param::Named(n) => self.render_named(n),
-            Param::Sink(s) => self.render_spread(s),
-        }
+}
+impl Renderable for ForLoop {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text_2::<Pattern, Expr>(self, renderer)
     }
-
-    fn render_spread(&mut self, node: Spread) {
-        debug!("render_spread: {:?}", node);
-        self.writer.push("..");
-        if let Some(name) = node.name() {
-            self.render_ident(name);
-        }
-        if let Some(expr) = node.expr() {
-            self.render_expr(expr);
+}
+impl Renderable for ModuleImport {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        for child in self.as_untyped().children() {
+            if child.kind() == SyntaxKind::ImportItems {
+                render_children_typed_or_text_untyped::<Ident>(child, renderer);
+            } else if let Some(typed) = child.cast::<Expr>() {
+                typed.render(renderer);
+            } else {
+                render_anon(child, renderer);
+            }
         }
     }
-
-    fn render_destruct_assign(&mut self, node: DestructAssignment) {
-        debug!("render_destruct_assign: {:?}", node);
-        self.render_pattern(node.pattern());
-        self.writer.push(" = ");
-        self.render_expr(node.value());
+}
+impl Renderable for ModuleInclude {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Expr>(self, renderer)
     }
+}
+impl Renderable for LoopBreak {}
+impl Renderable for LoopContinue {}
+impl Renderable for FuncReturn {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Expr>(self, renderer)
+    }
+}
 
-    fn render_set(&mut self, node: SetRule) {
-        debug!("render_set: {:?}", node);
-        self.writer.push("set ");
-        self.render_expr(node.target());
-        self.render_args(node.args());
-        if let Some(expr) = node.condition() {
-            self.render_expr(expr);
+impl Renderable for Pattern {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        match self {
+            Pattern::Normal(expr) => expr.render(renderer),
+            Pattern::Placeholder(underscore) => render_anon(underscore.as_untyped(), renderer),
+            Pattern::Destructuring(destructuring) => destructuring.render(renderer),
         }
     }
+}
 
-    fn render_conditional(&mut self, node: Conditional) {
-        debug!("render_conditional: {:?}", node);
-        self.writer.push("if ");
-        self.render_expr(node.condition());
-        self.writer.push(" { ");
-        self.render_expr(node.if_body());
-        self.writer.push(" }");
-        if let Some(els) = node.else_body() {
-            self.writer.push(" else { ");
-            self.render_expr(els);
-            self.writer.push(" }");
+impl Renderable for Destructuring {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Ident>(self, renderer)
+    }
+}
+
+impl Renderable for Named {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text_2::<Expr, Ident>(self, renderer)
+    }
+}
+
+impl Renderable for Spread {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text_2::<Expr, Ident>(self, renderer)
+    }
+}
+
+impl Renderable for Keyed {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        render_children_typed_or_text::<Expr>(self, renderer)
+    }
+}
+
+impl Renderable for Arg {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        match self {
+            Arg::Pos(expr) | Arg::Spread(expr) => {
+                expr.render(renderer);
+            }
+            Arg::Named(named) => named.render(renderer),
         }
     }
+}
 
-    fn render_while(&mut self, node: WhileLoop) {
-        debug!("render_while: {:?}", node);
-        self.writer.push("while ");
-        self.render_expr(node.condition());
-        self.writer.push(" { ");
-        self.render_expr(node.body());
-        self.writer.push(" }");
+impl Renderable for Param {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        match self {
+            Param::Pos(pat) => pat.render(renderer),
+            Param::Named(named) => named.render(renderer),
+            Param::Sink(spread) => spread.render(renderer),
+        }
     }
+}
 
-    fn render_for(&mut self, node: ForLoop) {
-        debug!("render_for: {:?}", node);
-        self.writer.push("for ");
-        self.render_pattern(node.pattern());
-        self.writer.push(" in ");
-        self.render_expr(node.iter());
-        self.writer.push(" { ");
-        self.render_expr(node.body());
-        self.writer.push(" }");
+impl Renderable for ArrayItem {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        match self {
+            ArrayItem::Pos(expr) | ArrayItem::Spread(expr) => expr.render(renderer),
+        }
+    }
+}
+
+impl Renderable for DictItem {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        match self {
+            DictItem::Named(named) => named.render(renderer),
+            DictItem::Keyed(keyed) => keyed.render(renderer),
+            DictItem::Spread(expr) => expr.render(renderer),
+        }
+    }
+}
+
+impl Renderable for Expr {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        match self {
+            Expr::Text(node) => node.render(renderer),
+            Expr::Space(node) => node.render(renderer),
+            Expr::Linebreak(node) => node.render(renderer),
+            Expr::Parbreak(node) => node.render(renderer),
+            Expr::Escape(node) => node.render(renderer),
+            Expr::Shorthand(node) => node.render(renderer),
+            Expr::SmartQuote(node) => node.render(renderer),
+            Expr::Strong(node) => node.render(renderer),
+            Expr::Emph(node) => node.render(renderer),
+            Expr::Raw(node) => node.render(renderer),
+            Expr::Link(node) => node.render(renderer),
+            Expr::Label(node) => node.render(renderer),
+            Expr::Ref(node) => node.render(renderer),
+            Expr::Heading(node) => node.render(renderer),
+            Expr::List(node) => node.render(renderer),
+            Expr::Enum(node) => node.render(renderer),
+            Expr::Term(node) => node.render(renderer),
+            Expr::Equation(node) => node.render(renderer),
+            Expr::Math(node) => node.render(renderer),
+            Expr::MathIdent(node) => node.render(renderer),
+            Expr::MathAlignPoint(node) => node.render(renderer),
+            Expr::MathDelimited(node) => node.render(renderer),
+            Expr::MathAttach(node) => node.render(renderer),
+            Expr::MathFrac(node) => node.render(renderer),
+            Expr::MathRoot(node) => node.render(renderer),
+            Expr::Ident(node) => node.render(renderer),
+            Expr::None(node) => node.render(renderer),
+            Expr::Auto(node) => node.render(renderer),
+            Expr::Bool(node) => node.render(renderer),
+            Expr::Int(node) => node.render(renderer),
+            Expr::Float(node) => node.render(renderer),
+            Expr::Numeric(node) => node.render(renderer),
+            Expr::Str(node) => node.render(renderer),
+            Expr::Code(node) => node.render(renderer),
+            Expr::Content(node) => node.render(renderer),
+            Expr::Parenthesized(node) => node.render(renderer),
+            Expr::Array(node) => node.render(renderer),
+            Expr::Dict(node) => node.render(renderer),
+            Expr::Unary(node) => node.render(renderer),
+            Expr::Binary(node) => node.render(renderer),
+            Expr::FieldAccess(node) => node.render(renderer),
+            Expr::FuncCall(node) => node.render(renderer),
+            Expr::Closure(node) => node.render(renderer),
+            Expr::Let(node) => node.render(renderer),
+            Expr::DestructAssign(node) => node.render(renderer),
+            Expr::Set(node) => node.render(renderer),
+            Expr::Show(node) => node.render(renderer),
+            Expr::Conditional(node) => node.render(renderer),
+            Expr::While(node) => node.render(renderer),
+            Expr::For(node) => node.render(renderer),
+            Expr::Import(node) => node.render(renderer),
+            Expr::Include(node) => node.render(renderer),
+            Expr::Break(node) => node.render(renderer),
+            Expr::Continue(node) => node.render(renderer),
+            Expr::Return(node) => node.render(renderer),
+        }
     }
 }

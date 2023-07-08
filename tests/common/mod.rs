@@ -1,3 +1,4 @@
+#[allow(unused_macros)]
 macro_rules! test_snippet {
     (
         $test_name:ident,
@@ -8,10 +9,26 @@ macro_rules! test_snippet {
         #[test]
         $(#[ignore = $ignore])?
         fn $test_name() {
-            let _ = env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("debug"))
-                .is_test(true)
-                .try_init();
-            similar_asserts::assert_eq!(typstfmt::format($snippet, typstfmt::Config::default()), $expected);
+            let _ = tracing_subscriber::fmt().with_test_writer().with_max_level(tracing::Level::DEBUG).try_init();
+            let formatted = typstfmt::format($snippet, typstfmt::Config::default()).unwrap();
+            similar_asserts::assert_eq!(formatted, $expected);
+        }
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! test_snippet_unchanged {
+    (
+        $test_name:ident,
+        $(ignore = $ignore:tt ,)?
+        $snippet:expr,
+    ) => {
+        #[test]
+        $(#[ignore = $ignore])?
+        fn $test_name() {
+            let _ = tracing_subscriber::fmt().with_test_writer().with_max_level(tracing::Level::DEBUG).try_init();
+            let formatted = typstfmt::format($snippet, typstfmt::Config::default()).unwrap();
+            similar_asserts::assert_eq!(&formatted, $snippet);
         }
     };
 }

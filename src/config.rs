@@ -12,3 +12,12 @@ impl Default for Config {
         Config { indent: 4 }
     }
 }
+
+impl Config {
+    /// Get a config that doesn't change the input.
+    ///
+    /// This is primarily used for fuzzing and testing.
+    pub fn no_changes() -> Self {
+        Config { indent: 4 }
+    }
+}
