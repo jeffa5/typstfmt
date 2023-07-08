@@ -131,7 +131,16 @@ impl Renderable for Space {
     }
 }
 impl Renderable for Linebreak {}
-impl Renderable for Parbreak {}
+impl Renderable for Parbreak {
+    fn render(&self, renderer: &mut Renderer) {
+        debug!(?self, "rendering");
+        if renderer.config().spacing {
+                renderer.writer.newline().newline_with_indent();
+        } else {
+            render_anon(self.as_untyped(), renderer)
+        }
+    }
+}
 impl Renderable for Escape {}
 impl Renderable for Shorthand {}
 impl Renderable for SmartQuote {}
@@ -233,7 +242,17 @@ impl Renderable for Str {}
 impl Renderable for ContentBlock {
     fn render(&self, renderer: &mut Renderer) {
         debug!(?self, "rendering");
-        render_children_typed_or_text::<Markup>(self, renderer)
+        for child in self.as_untyped().children() {
+            if let Some(markup) = child.cast::<Markup>() {
+                markup.render(renderer);
+            } else if child.kind() == SyntaxKind::LeftBracket {
+                renderer.writer.push("[").inc_indent();
+            } else if child.kind() == SyntaxKind::RightBracket {
+                renderer.writer.dec_indent().push("]");
+            } else {
+                render_anon(child, renderer);
+            }
+        }
     }
 }
 impl Renderable for Parenthesized {
