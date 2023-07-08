@@ -336,7 +336,7 @@ name = "fuzz-fuzz"
 version = "0.0.0"
 dependencies = [
  "libfuzzer-sys",
- "typst-fmt",
+ "typstfmt",
 ]
 
 [[package]]
@@ -1092,19 +1092,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "typst-fmt"
-version = "0.1.0"
-dependencies = [
- "clap",
- "globmatch",
- "itertools",
- "log",
- "regex",
- "toml",
- "typst",
-]
-
-[[package]]
 name = "typst-macros"
 version = "0.6.0"
 source = "git+https://github.com/typst/typst.git?rev=v0.6.0#2dfd44fedd99ab9414c17f358179e1c37e953f30"
@@ -1113,6 +1100,20 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.23",
+]
+
+[[package]]
+name = "typstfmt"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "globmatch",
+ "itertools",
+ "log",
+ "regex",
+ "serde",
+ "toml",
+ "typst",
 ]
 
 [[package]]

@@ -1,5 +1,5 @@
 {
-  description = "typst-fmt";
+  description = "typstfmt";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";

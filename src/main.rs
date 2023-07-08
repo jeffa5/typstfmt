@@ -2,13 +2,13 @@ use std::fs::File;
 use std::io::Read;
 use std::io::Write;
 use std::path::PathBuf;
-use typst_fmt::typst_format;
+use typstfmt::format;
 
 use clap::Parser;
 use clap::ValueEnum;
 
 #[derive(Parser, Debug)]
-#[command(version = "0.0.1", about="A formatter for the typst language", long_about = None)]
+#[command(version = "0.0.1", about = "A formatter for the typst language")]
 struct Args {
     #[arg(
         short,
@@ -17,17 +17,16 @@ struct Args {
     )]
     mode: Mode,
 
-    /// input file
-    #[arg(help = "A file to format. If not specified, all .typ file will be formatted")]
+    /// A file to format. If not specified, all .typ file will be formatted
+    #[arg()]
     input: Option<PathBuf>,
 
-    #[arg(
-        short,
-        long,
-        help = "If specified, the result of output will be put in this file. input *must* be specified if you set output."
-    )]
+    /// If specified, the result of output will be put in this file. input *must* be specified if you set output.
+    #[arg(short, long)]
     output: Option<PathBuf>,
-    //watch : bool
+
+    #[arg(long, default_value = "typstfmt.toml")]
+    config: PathBuf,
 }
 
 #[derive(Copy, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
@@ -64,17 +63,29 @@ fn main() {
             .open(&path)
             .unwrap();
         file.set_len(0).unwrap();
-        let formatted = typst_format(&content);
+
+        let config = if args.config.is_file() {
+            let mut config_file = File::open(&args.config).unwrap();
+            let mut config_file_content = String::new();
+            config_file
+                .read_to_string(&mut config_file_content)
+                .unwrap();
+            toml::from_str(&config_file_content).unwrap()
+        } else {
+            typstfmt::Config::default()
+        };
+
+        let formatted = format(&content, config);
         if let Some(output) = args.output {
             let mut file =
                 File::open(output).unwrap_or_else(|op| panic!("Couldn't open output file: {op}"));
-            file.write(formatted.as_bytes())
+            file.write_all(formatted.as_bytes())
                 .unwrap_or_else(|op| panic!("Couldn't write in the output: {op}"));
             break;
         }
         match args.mode {
             Mode::Format => {
-                file.write(formatted.as_bytes())
+                file.write_all(formatted.as_bytes())
                     .unwrap_or_else(|op| panic!("Couldn't write in file at {path:?}: {op}"));
             }
             Mode::Simulate => {
@@ -85,7 +96,7 @@ fn main() {
                     .join(&PathBuf::from("__simulate__.typ"));
                 let mut file = File::create(&spath)
                     .unwrap_or_else(|e| panic!("Couldn't open input file : {e}"));
-                file.write(formatted.as_bytes())
+                file.write_all(formatted.as_bytes())
                     .unwrap_or_else(|op| panic!("Couldn't write in file at {path:?}: {op}"));
             }
         }

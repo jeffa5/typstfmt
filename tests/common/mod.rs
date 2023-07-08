@@ -11,7 +11,7 @@ macro_rules! test_snippet {
             let _ = env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("debug"))
                 .is_test(true)
                 .try_init();
-            similar_asserts::assert_eq!(typst_fmt::typst_format($snippet), $expected);
+            similar_asserts::assert_eq!(typstfmt::format($snippet, typstfmt::Config::default()), $expected);
         }
     };
 }

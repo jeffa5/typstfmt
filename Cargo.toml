@@ -1,13 +1,13 @@
 [package]
-name = "typst-fmt"
+name = "typstfmt"
 version = "0.1.0"
 edition = "2021"
 authors = ["Andrew Jeffery <dev@jeffas.io>"]
-repository = "https://github.com/jeffa5/typst-fmt"
+repository = "https://github.com/jeffa5/typstfmt"
 license = "MIT"
 
 [[bin]]
-name = "typst-fmt"
+name = "typstfmt"
 path = "src/main.rs"
 
 [dependencies]
@@ -16,6 +16,7 @@ globmatch = "0.2.3"
 itertools = "0.10.5"
 log = "0.4.17"
 regex = "1.7.3"
+serde = { version = "1.0.167", features = ["derive"] }
 toml = "0.7.3"
 typst = { git = "https://github.com/typst/typst.git", rev = "v0.6.0" }
 

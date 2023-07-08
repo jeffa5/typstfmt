@@ -1,23 +1,22 @@
 use log::info;
 use typst::syntax::{parse, LinkedNode};
 
+mod config;
 mod render;
 mod writer;
+
+pub use config::Config;
+use render::Renderer;
 use writer::Writer;
 
-use crate::render::Renderer;
-
-// Optimize: could return Text edit that should be applied one after the other
-// instead of String
-pub fn typst_format(s: &str) -> String {
+pub fn format(s: &str, config: Config) -> String {
     let init = parse(s);
     let root = LinkedNode::new(&init);
     info!("parsed : \n{init:?}\n");
-    let mut result = String::with_capacity(1024);
-    let writer = Writer::default(&mut result);
+    let writer = Writer::new(config);
 
     let mut renderer = Renderer { writer };
     renderer.render(root);
 
-    result
+    renderer.finish()
 }

@@ -1,92 +1,41 @@
-/// Contains style parameters used while formatting.
-#[derive(Clone, Copy)]
-pub struct Style {
-    /// The amount of space by which to indent.
-    indent: usize,
-}
-
-impl Default for Style {
-    fn default() -> Self {
-        Style { indent: 4 }
-    }
-}
+use crate::config::Config;
 
 /// A context object used to store state while formatting.
-pub struct Writer<'a> {
-    value: &'a mut String,
-    /// The style to use for formatting the text.
-    pub style: Style,
+#[derive(Default)]
+pub struct Writer {
+    /// The current value written.
+    value: String,
+    /// The config to use for formatting the text.
+    config: Config,
     /// The current indentation level, in spaces.
     indent_level: usize,
 }
 
-impl<'a> Writer<'a> {
-    pub fn default(s: &'a mut String) -> Self {
+impl Writer {
+    pub fn new(style: Config) -> Self {
         Self {
+            value: String::new(),
+            config: style,
             indent_level: 0,
-            style: Default::default(),
-            value: s,
         }
     }
 
-    pub fn with_style(mut self, style: Style) -> Self {
-        self.style = style;
-        self
-    }
-
-    #[allow(dead_code)]
-    pub fn with_indent_level(mut self, indent: usize) -> Self {
-        self.indent_level = indent;
-        self
-    }
-
-    // // todo test me
-    // /// Ignore whitespace.
-    // pub fn current_line_length(&self, s: &String) -> usize {
-    //     fn len_no_space(s: &str) -> usize {
-    //         s.len() - s.chars().filter(|x| x == &' ').count()
-    //     }
-    //     let Some(last_line) = self.final_result.lines().last() else {
-    //         if let Some(app) = s.lines().last() {
-    //             println!("no last line");
-    //            return len_no_space(app);
-    //     } else {
-    //             println!("no last line and no app lines");
-    //             return 0;
-    //         }
-    //     };
-    //     if !s.contains('\n') {
-    //         len_no_space(last_line) + len_no_space(s)
-    //     } else {
-    //         len_no_space(s.split('\n').last().unwrap())
-    //     }
-    // }
-    //
-    // #[must_use]
-    // pub fn indent_level(&self) -> usize {
-    //     self.indent_level
-    // }
-
     /// Appends the amount of spaces defined by the style.
-    // pub fn indent(&mut self) -> &mut Self {
-    //     self.value.push_str(&" ".repeat(self.style.indent));
-    //     self
-    // }
+    pub fn indent(&mut self) -> &mut Self {
+        self.push(&" ".repeat(self.indent_level));
+        self
+    }
 
     /// Appends the given text to the buffer.
-    /// # Arguments
-    ///
-    /// * `s` - The text to append to the buffer with.
     pub fn push(&mut self, s: &str) -> &mut Self {
-        self.value.push_str(&s);
+        self.value.push_str(s);
         self
     }
 
     /// Appends a newline character to the buffer, followed by
     /// the current indentation level in spaces.
     pub fn newline_with_indent(&mut self) -> &mut Self {
-        self.newline();
-        self.push(" ".repeat(self.indent_level).as_str());
+        self.newline().indent();
         self
     }
 
@@ -96,50 +45,21 @@ impl<'a> Writer<'a> {
         self
     }
 
-    /// Appends a space to the buffer.
-    // pub fn space(&mut self, count: Option<usize>) -> &mut Self {
-    //     self.push(" ".repeat(count.unwrap_or(1)).as_str());
-    //     self
-    // }
-
-    /// Updates the indentation level.
-    #[allow(dead_code)]
-    pub fn update_indent<F>(&mut self, update_fn: F) -> &mut Self
-    where
-        F: FnOnce(usize) -> usize,
-    {
-        self.indent_level = update_fn(self.indent_level);
-        self
-    }
-
     /// Increases the current indentation level by the amount specified in the style.
     pub fn inc_indent(&mut self) -> &mut Self {
-        self.indent_level = self.indent_level.saturating_add(self.style.indent);
+        self.indent_level = self.indent_level.saturating_add(self.config.indent);
         self
     }
 
     /// Decreases the current indentation level by the amount specified in the style.
     pub fn dec_indent(&mut self) -> &mut Self {
-        self.indent_level = self.indent_level.saturating_sub(self.style.indent);
+        self.indent_level = self.indent_level.saturating_sub(self.config.indent);
         self
     }
 
-    /// Executes the given function with an increased indentation level and decreases
-    /// the indentation level after that the by the same amount.
-    #[allow(dead_code)]
-    pub fn indented<F>(&mut self, f: F) -> &mut Self
-    where
-        F: FnOnce(&mut Self) -> (),
-    {
-        self.inc_indent();
-        f(self);
-        self.dec_indent();
-        self
-    }
-
-    /// The current value holded by the writer
-    pub fn value(&self) -> &String {
-        &self.value
+    /// Get the written value.
+    pub fn finish(self) -> String {
+        self.value
     }
 }
 
@@ -149,49 +69,47 @@ mod tests {
 
     #[test]
     fn state_persistent() {
-        let mut res = String::from("");
-        let mut writer = Writer::default(&mut res);
-        similar_asserts::assert_eq!(writer.value(), "");
+        let mut writer = Writer::default();
         writer.inc_indent();
         writer.newline_with_indent();
         writer.push("Hello, World!");
-        similar_asserts::assert_eq!(writer.value(), "\n    Hello, World!");
+        similar_asserts::assert_eq!(writer.finish(), "\n    Hello, World!");
     }
 
     #[test]
     fn complex() {
-        let mut res = String::from("");
-        let mut writer = Writer::default(&mut res);
-        let indent = writer.style.indent;
+        let mut writer = Writer::default();
+        let indent = writer.config.indent;
         writer
             .push("f(")
-            .indented(|w| {
-                w.newline_with_indent()
-                    .push("a,")
-                    .newline_with_indent()
-                    .push("b");
-            })
+            .inc_indent()
+            .newline_with_indent()
+            .push("a,")
+            .newline_with_indent()
+            .push("b")
+            .dec_indent();
+        dbg!(&writer.indent_level);
+        writer
             .newline_with_indent()
             .push(")");
         similar_asserts::assert_eq!(
-            writer.value(),
-            &format!("f(\n{}a,\n{}b\n)", " ".repeat(indent), " ".repeat(indent))
+            writer.finish(),
+            format!("f(\n{0}a,\n{0}b\n)", " ".repeat(indent))
         );
     }
 
     #[test]
     fn indent_change() {
-        let mut res = String::from("");
-        let mut writer = Writer::default(&mut res).with_indent_level(0);
-        let indent_style = writer.style.indent;
+        let mut writer = Writer::default();
+        let indent_style = writer.config.indent;
         similar_asserts::assert_eq!(writer.indent_level, 0);
         writer.inc_indent();
-        similar_asserts::assert_eq!(writer.indent_level, 0 + indent_style);
+        similar_asserts::assert_eq!(writer.indent_level, indent_style);
         writer.inc_indent();
-        similar_asserts::assert_eq!(writer.indent_level, 0 + 2 * indent_style);
+        similar_asserts::assert_eq!(writer.indent_level, 2 * indent_style);
         writer.dec_indent();
-        similar_asserts::assert_eq!(writer.indent_level, 0 + indent_style);
-        writer.update_indent(|i| i - indent_style);
+        similar_asserts::assert_eq!(writer.indent_level, indent_style);
+        writer.dec_indent();
         similar_asserts::assert_eq!(writer.indent_level, 0);
         writer.dec_indent();
         similar_asserts::assert_eq!(writer.indent_level, 0);

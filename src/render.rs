@@ -3,11 +3,12 @@ use typst::syntax::{ast::*, LinkedNode, SyntaxKind};
 
 use crate::writer::Writer;
 
-pub struct Renderer<'a> {
-    pub writer: Writer<'a>,
+pub struct Renderer {
+    pub writer: Writer,
 }
 
-impl<'a> Renderer<'a> {
+impl Renderer {
+    /// Render the AST from the given node.
     pub fn render(&mut self, node: LinkedNode) {
         debug!("render: {:?}", node);
         match node.kind() {
@@ -15,6 +16,11 @@ impl<'a> Renderer<'a> {
             SyntaxKind::Markup => self.render_markup(node.cast().unwrap()),
             kind => todo!("Render {:?}", kind),
         }
+    }
+
+    /// Get the rendered value.
+    pub fn finish(self) -> String {
+        self.writer.finish()
     }
 
     fn render_markup(&mut self, node: Markup) {
@@ -318,7 +324,7 @@ impl<'a> Renderer<'a> {
 
     fn render_link(&mut self, node: Link) {
         debug!("render_link: {:?}", node);
-        self.writer.push(&node.get());
+        self.writer.push(node.get());
     }
 
     fn render_label(&mut self, node: Label) {

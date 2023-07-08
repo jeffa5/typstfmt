@@ -1144,21 +1144,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "typst-fmt"
-version = "0.1.0"
-dependencies = [
- "clap",
- "env_logger",
- "globmatch",
- "itertools",
- "log",
- "regex",
- "similar-asserts",
- "toml",
- "typst",
-]
-
-[[package]]
 name = "typst-macros"
 version = "0.6.0"
 source = "git+https://github.com/typst/typst.git?rev=v0.6.0#2dfd44fedd99ab9414c17f358179e1c37e953f30"
@@ -1167,6 +1152,22 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.23",
+]
+
+[[package]]
+name = "typstfmt"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "env_logger",
+ "globmatch",
+ "itertools",
+ "log",
+ "regex",
+ "serde",
+ "similar-asserts",
+ "toml",
+ "typst",
 ]
 
 [[package]]
