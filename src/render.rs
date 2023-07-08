@@ -433,12 +433,11 @@ impl Renderable for Named {
         for child in self.as_untyped().children() {
             if let Some(expr) = child.cast::<Expr>() {
                 expr.render(renderer);
-            }
-            else if let Some(ident) = child.cast::<Ident>() {
+            } else if let Some(ident) = child.cast::<Ident>() {
                 ident.render(renderer);
             } else if child.kind() == SyntaxKind::Colon && renderer.config().spacing {
                 renderer.writer.push(": ");
-            }else {
+            } else {
                 render_anon(child, renderer);
             }
         }
