@@ -3,14 +3,14 @@ mod common;
 
 test_snippet!(
     comments,
-    expect = "// a line comment\n",
+    expect = "// a line comment",
     "// a line comment",
 );
 
-test_snippet!(codeblock_single, expect = "#{a([])}", "#{\na()[]\n}",);
+test_snippet!(codeblock_single, expect = "#{\n    a()[]\n}", "#{\na()[]\n}",);
 test_snippet!(
     codeblock_multi,
-    expect = "#{\n    a([])\n    b([])\n}",
+    expect = "#{\n    a()[]\n    b()[]\n}",
     "#{\na()[]\nb()[]\n}",
 );
 
