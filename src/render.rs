@@ -616,12 +616,31 @@ impl Renderable for Expr {
 // include the dots.
 fn render_args(node: &SyntaxNode, renderer: &mut Renderer) {
     debug!(?node, "render_args");
-    let children = node.children();
-    for child in children {
+    let mut children = Children::new(node);
+    let multiline = children.any(|c| c.kind() == SyntaxKind::Space && c.text().contains("\n"));
+    let past_argument = |children: &Children, renderer: &mut Renderer| {
+        if multiline {
+            renderer.writer.push(",").newline_with_indent();
+        } else if children.has_next(|k| !k.is_trivia() && !k.is_grouping()) {
+            renderer.writer.push(", ");
+        }
+    };
+    while let Some(child) = children.next() {
         if let Some(expr) = child.cast::<Expr>() {
             expr.render(renderer);
+            past_argument(&children, renderer);
         } else if let Some(named) = child.cast::<Named>() {
             named.render(renderer);
+            past_argument(&children, renderer);
+        } else if multiline && child.kind() == SyntaxKind::LeftParen {
+            renderer
+                .writer
+                .open_grouping(&child.text())
+                .newline_with_indent();
+        } else if child.kind() == SyntaxKind::Comma {
+            // skip
+        } else if child.kind() == SyntaxKind::Space {
+            // skip
         } else {
             render_anon(child, renderer);
         }
