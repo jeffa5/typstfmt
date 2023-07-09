@@ -611,23 +611,12 @@ impl Renderable for Expr {
 // include the dots.
 fn render_args(node: &SyntaxNode, renderer: &mut Renderer) {
     debug!(?node, "render_args");
-    let total = node.children().count();
     let children = node.children();
-    for (i, child) in children.enumerate() {
+    for child in children {
         if let Some(expr) = child.cast::<Expr>() {
             expr.render(renderer);
-            if renderer.config().spacing && i + 2 < total {
-                renderer.writer.push(", ");
-            }
         } else if let Some(named) = child.cast::<Named>() {
             named.render(renderer);
-            if renderer.config().spacing && i + 2 < total {
-                renderer.writer.push(", ");
-            }
-        } else if child.kind() == SyntaxKind::Comma {
-            if !renderer.config().spacing {
-                render_anon(child, renderer);
-            }
         } else {
             render_anon(child, renderer);
         }
