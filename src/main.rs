@@ -5,18 +5,10 @@ use std::path::PathBuf;
 use typstfmt::format;
 
 use clap::Parser;
-use clap::ValueEnum;
 
 #[derive(Parser, Debug)]
 #[command(version = "0.0.1", about = "A formatter for the typst language")]
 struct Args {
-    #[arg(
-        short,
-        long,
-        value_enum, default_value_t = Mode::Format
-    )]
-    mode: Mode,
-
     /// A file to format. If not specified, all .typ file will be formatted
     #[arg()]
     input: Option<PathBuf>,
@@ -27,14 +19,6 @@ struct Args {
 
     #[arg(long, default_value = "typstfmt.toml")]
     config: PathBuf,
-}
-
-#[derive(Copy, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
-enum Mode {
-    /// formats the file in place
-    Format,
-    /// puts the formatted result in a __simulate__*.typ next to your inputs.
-    Simulate,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -72,21 +56,9 @@ fn main() -> anyhow::Result<()> {
             file.write_all(formatted.as_bytes())?;
             break;
         }
-        match args.mode {
-            Mode::Format => {
-                let mut file = File::create(&path)?;
-                file.write_all(formatted.as_bytes())?;
-            }
-            Mode::Simulate => {
-                let spath = path
-                    .parent()
-                    .unwrap_or(&PathBuf::default())
-                    .join(path.file_stem().unwrap())
-                    .join(&PathBuf::from("__simulate__.typ"));
-                let mut file = File::create(&spath)?;
-                file.write_all(formatted.as_bytes())?;
-            }
-        }
+
+        let mut file = File::create(&path)?;
+        file.write_all(formatted.as_bytes())?;
     }
     Ok(())
 }
