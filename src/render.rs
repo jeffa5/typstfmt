@@ -134,10 +134,6 @@ impl<'a> Children<'a> {
         item
     }
 
-    fn has_next_non_trivia(&self) -> bool {
-        self.has_next(|k| !k.is_trivia())
-    }
-
     fn has_next(&self, f: impl Fn(SyntaxKind) -> bool) -> bool {
         let mut index = self.index;
         loop {
