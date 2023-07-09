@@ -155,6 +155,14 @@ impl<'a> Children<'a> {
     fn any(&self, f: impl FnMut(&&SyntaxNode) -> bool) -> bool {
         self.items.iter().any(f)
     }
+
+    fn peek_next(&self) -> Option<&&SyntaxNode> {
+        self.items.get(self.index + 1)
+    }
+
+    fn peek_prev(&self) -> Option<&&SyntaxNode> {
+        self.index.checked_sub(1).and_then(|i| self.items.get(i))
+    }
 }
 
 impl Renderable for Markup {
@@ -387,12 +395,24 @@ impl Renderable for Closure {
 }
 impl Renderable for LetBinding {
     fn render_impl(&self, renderer: &mut Renderer) {
-        let children = self.as_untyped().children();
-        for child in children {
+        let mut children = Children::new(self.as_untyped());
+        while let Some(child) = children.next() {
             if let Some(expr) = child.cast::<Expr>() {
                 expr.render(renderer);
             } else if let Some(named) = child.cast::<Pattern>() {
                 named.render(renderer);
+            } else if child.kind() == SyntaxKind::Eq {
+                if !children.peek_prev().map_or(false, |n| n.text().ends_with(" ")) {
+                    renderer.writer.push(" ");
+                }
+                renderer.writer.push("=");
+                if !children.peek_next().map_or(false, |n| n.text().starts_with(" ")) {
+                    renderer.writer.push(" ");
+                }
+            } else if child.kind() == SyntaxKind::Let {
+                renderer.writer.push("let ");
+            } else if child.kind() == SyntaxKind::Space {
+                // skip
             } else {
                 render_anon(child, renderer);
             }
