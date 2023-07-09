@@ -3723,10 +3723,6 @@ rec {
             packageId = "itertools";
           }
           {
-            name = "regex";
-            packageId = "regex";
-          }
-          {
             name = "serde";
             packageId = "serde";
             features = [ "derive" ];
