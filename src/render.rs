@@ -637,15 +637,17 @@ fn render_params(node: &SyntaxNode, renderer: &mut Renderer) {
             param.render(renderer);
             if multiline {
                 renderer.writer.push(",").newline_with_indent();
+            } else if children.has_next(|k| !k.is_trivia() && !k.is_grouping()) {
+                renderer.writer.push(", ");
             }
         } else if multiline && child.kind() == SyntaxKind::LeftParen {
             renderer
                 .writer
                 .open_grouping(&child.text())
                 .newline_with_indent();
-        } else if multiline && child.kind() == SyntaxKind::Comma {
+        } else if child.kind() == SyntaxKind::Comma {
             // skip
-        } else if multiline && child.kind() == SyntaxKind::Space {
+        } else if child.kind() == SyntaxKind::Space {
             // skip
         } else {
             render_anon(child, renderer);
