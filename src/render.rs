@@ -492,6 +492,10 @@ impl Renderable for Named {
                 expr.render(renderer);
             } else if let Some(ident) = child.cast::<Ident>() {
                 ident.render(renderer);
+            } else if child.kind() == SyntaxKind::Colon {
+                renderer.writer.push(": ");
+            } else if child.kind() == SyntaxKind::Space {
+                // skip
             } else {
                 render_anon(child, renderer);
             }
