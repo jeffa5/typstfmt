@@ -13,3 +13,4 @@ test_snippet_reformat! { fuzzed_0004, "#(z*j)", }
 // }
 
 test_snippet_reformat! { fuzzed_0006, "//\r", }
+test_snippet_reformat! { fuzzed_0007, "#k[][*\n*]", }
