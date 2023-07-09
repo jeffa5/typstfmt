@@ -44,7 +44,7 @@ test_snippet!(
 
 test_snippet!(
     arg_indent,
-    expect = "#let f(\n    a,\n    b\n) = a + b",
+    expect = "#let f(\n    a,\n    b,\n) = a + b",
     "#let f(\na,\nb,\n) = a + b",
 );
 
