@@ -151,6 +151,10 @@ impl<'a> Children<'a> {
             }
         }
     }
+
+    fn any(&self, f: impl FnMut(&&SyntaxNode) -> bool) -> bool {
+        self.items.iter().any(f)
+    }
 }
 
 impl Renderable for Markup {
@@ -629,9 +633,22 @@ fn render_args(node: &SyntaxNode, renderer: &mut Renderer) {
 fn render_params(node: &SyntaxNode, renderer: &mut Renderer) {
     debug!(?node, "render_params");
     let mut children = Children::new(node);
+    let multiline = children.any(|c| c.kind() == SyntaxKind::Space && c.text().contains("\n"));
     while let Some(child) = children.next() {
         if let Some(param) = child.cast::<Param>() {
             param.render(renderer);
+            if multiline {
+                renderer.writer.push(",").newline_with_indent();
+            }
+        } else if multiline && child.kind() == SyntaxKind::LeftParen {
+            renderer
+                .writer
+                .open_grouping(&child.text())
+                .newline_with_indent();
+        } else if multiline && child.kind() == SyntaxKind::Comma {
+            // skip
+        } else if multiline && child.kind() == SyntaxKind::Space {
+            // skip
         } else {
             render_anon(child, renderer);
         }
