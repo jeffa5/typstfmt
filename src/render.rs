@@ -314,7 +314,7 @@ impl Renderable for Binary {
             if let Some(expr) = child.cast::<Expr>() {
                 expr.render(renderer);
             } else if BinOp::from_kind(child.kind()).is_some() && renderer.config().spacing {
-                renderer.writer.push(" ").push(&child.text()).push(" ");
+                renderer.writer.push(&child.text());
             } else {
                 render_anon(child, renderer)
             }
