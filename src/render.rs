@@ -139,14 +139,18 @@ impl Renderable for Space {
     fn render(&self, renderer: &mut Renderer) {
         debug!(?self, "rendering");
         if renderer.config().spacing {
-            // collapse multiple spaces
-            let regex = Regex::new(" +").unwrap();
-            let s = regex
-                .replace_all(self.as_untyped().text(), " ")
-                .into_owned();
-            // convert newlines to newlines with indent
-            let s = s.replace("\n", &format!("\n{}", renderer.writer.current_indent()));
-            renderer.writer.push(&s);
+            let text = self.as_untyped().text();
+            if text.contains("\n") {
+                // convert newlines to newlines with indent
+                renderer.writer.newline_with_indent();
+            } else {
+                // collapse multiple spaces
+                let regex = Regex::new(" +").unwrap();
+                let s = regex
+                    .replace_all(self.as_untyped().text(), " ")
+                    .into_owned();
+                renderer.writer.push(&s);
+            }
         } else {
             renderer.writer.push(self.as_untyped().text());
         }
