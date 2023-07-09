@@ -9,7 +9,7 @@ use typstfmt::format;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
-#[command(version = "0.0.1", about = "Format typst code")]
+#[command(version = "0.1.0", about = "Format typst code")]
 struct Args {
     /// A file to format. If not specified, all .typ file will be formatted
     files: Vec<PathBuf>,
