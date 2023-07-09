@@ -144,6 +144,8 @@ impl Renderable for Space {
             let s = regex
                 .replace_all(self.as_untyped().text(), " ")
                 .into_owned();
+            // convert newlines to newlines with indent
+            let s = s.replace("\n", &format!("\n{}", renderer.writer.current_indent()));
             renderer.writer.push(&s);
         } else {
             renderer.writer.push(self.as_untyped().text());

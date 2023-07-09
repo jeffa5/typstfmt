@@ -52,7 +52,7 @@ pub fn format(input: &str, config: Config) -> Result<String, FormatError> {
 
     let reparsed = parse(&output);
     if reparsed.erroneous() {
-        debug!("Formatted text contained errors!");
+        debug!(?output, "Formatted text contained errors!");
         return Err(FormatError::ProducedErroneousOutput);
     }
 

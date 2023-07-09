@@ -23,8 +23,13 @@ impl Writer {
     }
 
     /// Push the current indentation amount.
+    pub fn current_indent(&self) -> String {
+        " ".repeat(self.indent_level)
+    }
+
+    /// Push the current indentation amount.
     pub fn indent(&mut self) -> &mut Self {
-        self.push(&" ".repeat(self.indent_level));
+        self.push(&self.current_indent());
         self
     }
 
