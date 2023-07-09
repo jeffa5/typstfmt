@@ -1272,7 +1272,6 @@ dependencies = [
  "env_logger",
  "globmatch",
  "itertools",
- "regex",
  "serde",
  "similar-asserts",
  "thiserror",

@@ -1,6 +1,5 @@
 use std::unreachable;
 
-use regex::Regex;
 use tracing::debug;
 use typst::syntax::{ast::*, LinkedNode, SyntaxKind, SyntaxNode};
 
@@ -208,12 +207,7 @@ impl Renderable for Space {
                 // convert newlines to newlines with indent
                 renderer.writer.newline_with_indent();
             } else {
-                // collapse multiple spaces
-                let regex = Regex::new(" +").unwrap();
-                let s = regex
-                    .replace_all(self.as_untyped().text(), " ")
-                    .into_owned();
-                renderer.writer.push(&s);
+                renderer.writer.space();
             }
         } else {
             renderer.writer.push(self.as_untyped().text());

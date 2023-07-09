@@ -45,6 +45,14 @@ impl Writer {
         self
     }
 
+    pub fn space(&mut self) -> &mut Self {
+        if self.value.ends_with("\n") {
+            // never push a space after a newline, that should be handled by `newline_with_indent`
+            return self;
+        }
+        self.push(" ")
+    }
+
     /// Appends a newline character to the buffer, followed by
     /// the current indentation level in spaces.
     pub fn newline_with_indent(&mut self) -> &mut Self {
@@ -97,7 +105,6 @@ impl Writer {
         self.push(text);
         self
     }
-
 
     /// Get the written value.
     pub fn finish(self) -> String {
