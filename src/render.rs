@@ -1,3 +1,5 @@
+use std::unreachable;
+
 use regex::Regex;
 use tracing::debug;
 use typst::syntax::{ast::*, LinkedNode, SyntaxKind, SyntaxNode};
@@ -31,6 +33,16 @@ fn render_anon(node: &SyntaxNode, renderer: &mut Renderer) {
     debug!(?node, "render_anon");
     if let Some(space) = node.cast::<Space>() {
         space.render(renderer);
+    } else if node.kind().is_grouping() {
+        match node.kind() {
+            SyntaxKind::LeftBrace | SyntaxKind::LeftParen | SyntaxKind::LeftBracket => {
+                renderer.writer.open_grouping(&node.text());
+            }
+            SyntaxKind::RightBrace | SyntaxKind::RightParen | SyntaxKind::RightBracket => {
+                renderer.writer.close_grouping(&node.text());
+            }
+            _ => unreachable!(),
+        }
     } else {
         renderer.writer.push(&node.text());
         for child in node.children() {
@@ -41,9 +53,13 @@ fn render_anon(node: &SyntaxNode, renderer: &mut Renderer) {
 
 /// An AstNode that we can render.
 trait Renderable: AstNode + std::fmt::Debug {
+    fn render_impl(&self, renderer: &mut Renderer) {
+        render_anon(self.as_untyped(), renderer)
+    }
+
     fn render(&self, renderer: &mut Renderer) {
         debug!(?self, "rendering");
-        render_anon(self.as_untyped(), renderer)
+        self.render_impl(renderer);
     }
 }
 
@@ -97,10 +113,50 @@ fn render_children_typed_or_text_2<T1: Renderable, T2: Renderable>(
     render_children_typed_or_text_untyped_2::<T1, T2>(node.as_untyped(), renderer)
 }
 
+#[derive(Debug)]
+struct Children<'a> {
+    items: Vec<&'a SyntaxNode>,
+    index: usize,
+}
+
+impl<'a> Children<'a> {
+    fn new(node: &'a SyntaxNode) -> Self {
+        Self {
+            items: node.children().collect(),
+            index: 0,
+        }
+    }
+
+    fn next(&mut self) -> Option<&&SyntaxNode> {
+        let item = self.items.get(self.index);
+        self.index += 1;
+        item
+    }
+
+    fn has_next_non_trivia(&self) -> bool {
+        self.has_next(|k| !k.is_trivia())
+    }
+
+    fn has_next(&self, f: impl Fn(SyntaxKind) -> bool) -> bool {
+        let mut index = self.index;
+        loop {
+            let item = self.items.get(index);
+            index += 1;
+            if let Some(it) = item {
+                if f(it.kind()) {
+                    return true;
+                }
+            } else {
+                return false;
+            }
+        }
+    }
+}
+
 impl Renderable for Markup {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
-        for child in self.as_untyped().children() {
+    fn render_impl(&self, renderer: &mut Renderer) {
+        let mut children = Children::new(self.as_untyped());
+        while let Some(child) = children.next() {
             if let Some(expr) = child.cast::<Expr>() {
                 expr.render(renderer);
             } else {
@@ -111,15 +167,11 @@ impl Renderable for Markup {
 }
 
 impl Renderable for CodeBlock {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
-        for child in self.as_untyped().children() {
+    fn render_impl(&self, renderer: &mut Renderer) {
+        let mut children = Children::new(self.as_untyped());
+        while let Some(child) = children.next() {
             if let Some(code) = child.cast::<Code>() {
                 code.render(renderer);
-            } else if child.kind() == SyntaxKind::LeftBrace {
-                renderer.writer.push("{").inc_indent();
-            } else if child.kind() == SyntaxKind::RightBrace {
-                renderer.writer.dec_indent().push("}");
             } else {
                 render_anon(child, renderer);
             }
@@ -128,16 +180,14 @@ impl Renderable for CodeBlock {
 }
 
 impl Renderable for Code {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Expr>(self, renderer)
     }
 }
 
 impl Renderable for Text {}
 impl Renderable for Space {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         if renderer.config().spacing {
             let text = self.as_untyped().text();
             if text.contains("\n") {
@@ -158,8 +208,7 @@ impl Renderable for Space {
 }
 impl Renderable for Linebreak {}
 impl Renderable for Parbreak {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         if renderer.config().spacing {
             renderer.writer.newline().newline_with_indent();
         } else {
@@ -171,14 +220,12 @@ impl Renderable for Escape {}
 impl Renderable for Shorthand {}
 impl Renderable for SmartQuote {}
 impl Renderable for Strong {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Markup>(self, renderer)
     }
 }
 impl Renderable for Emph {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Markup>(self, renderer)
     }
 }
@@ -186,46 +233,39 @@ impl Renderable for Raw {}
 impl Renderable for Link {}
 impl Renderable for Label {}
 impl Renderable for Ref {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<ContentBlock>(self, renderer)
     }
 }
 impl Renderable for Heading {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Markup>(self, renderer)
     }
 }
 impl Renderable for ListItem {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Markup>(self, renderer)
     }
 }
 impl Renderable for EnumItem {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Markup>(self, renderer)
     }
 }
 impl Renderable for TermItem {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Markup>(self, renderer)
     }
 }
 
 impl Renderable for Equation {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Math>(self, renderer)
     }
 }
 
 impl Renderable for Math {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Expr>(self, renderer)
     }
 }
@@ -233,26 +273,22 @@ impl Renderable for Math {
 impl Renderable for MathIdent {}
 impl Renderable for MathAlignPoint {}
 impl Renderable for MathDelimited {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text_2::<Expr, Math>(self, renderer)
     }
 }
 impl Renderable for MathAttach {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Expr>(self, renderer)
     }
 }
 impl Renderable for MathFrac {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Expr>(self, renderer)
     }
 }
 impl Renderable for MathRoot {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Expr>(self, renderer)
     }
 }
@@ -266,15 +302,10 @@ impl Renderable for Numeric {}
 impl Renderable for Str {}
 
 impl Renderable for ContentBlock {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         for child in self.as_untyped().children() {
             if let Some(markup) = child.cast::<Markup>() {
                 markup.render(renderer);
-            } else if child.kind() == SyntaxKind::LeftBracket {
-                renderer.writer.push("[").inc_indent();
-            } else if child.kind() == SyntaxKind::RightBracket {
-                renderer.writer.dec_indent().push("]");
             } else {
                 render_anon(child, renderer);
             }
@@ -282,34 +313,29 @@ impl Renderable for ContentBlock {
     }
 }
 impl Renderable for Parenthesized {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Expr>(self, renderer)
     }
 }
 impl Renderable for Array {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         // TODO: can't use ArrayItem instead of Expr here because the spread variant doesn't
         // include the dots.
         render_children_typed_or_text::<Expr>(self, renderer)
     }
 }
 impl Renderable for Dict {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<DictItem>(self, renderer)
     }
 }
 impl Renderable for Unary {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Expr>(self, renderer)
     }
 }
 impl Renderable for Binary {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         for child in self.as_untyped().children() {
             if let Some(expr) = child.cast::<Expr>() {
                 expr.render(renderer);
@@ -322,14 +348,12 @@ impl Renderable for Binary {
     }
 }
 impl Renderable for FieldAccess {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text_2::<Expr, Ident>(self, renderer)
     }
 }
 impl Renderable for FuncCall {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         for child in self.as_untyped().children() {
             if let Some(typed) = child.cast::<Expr>() {
                 typed.render(renderer);
@@ -343,8 +367,7 @@ impl Renderable for FuncCall {
 }
 
 impl Renderable for Closure {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         for child in self.as_untyped().children() {
             if let Some(typed) = child.cast::<Expr>() {
                 typed.render(renderer);
@@ -359,8 +382,7 @@ impl Renderable for Closure {
     }
 }
 impl Renderable for LetBinding {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         let children = self.as_untyped().children();
         for child in children {
             if let Some(expr) = child.cast::<Expr>() {
@@ -374,14 +396,12 @@ impl Renderable for LetBinding {
     }
 }
 impl Renderable for DestructAssignment {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text_2::<Pattern, Expr>(self, renderer)
     }
 }
 impl Renderable for SetRule {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         for child in self.as_untyped().children() {
             if child.kind() == SyntaxKind::Args {
                 render_args(child, renderer)
@@ -394,8 +414,7 @@ impl Renderable for SetRule {
     }
 }
 impl Renderable for ShowRule {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         for child in self.as_untyped().children() {
             if let Some(expr) = child.cast::<Expr>() {
                 expr.render(renderer);
@@ -406,26 +425,22 @@ impl Renderable for ShowRule {
     }
 }
 impl Renderable for Conditional {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Expr>(self, renderer)
     }
 }
 impl Renderable for WhileLoop {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Expr>(self, renderer)
     }
 }
 impl Renderable for ForLoop {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text_2::<Pattern, Expr>(self, renderer)
     }
 }
 impl Renderable for ModuleImport {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         for child in self.as_untyped().children() {
             if child.kind() == SyntaxKind::ImportItems {
                 render_children_typed_or_text_untyped::<Ident>(child, renderer);
@@ -438,23 +453,20 @@ impl Renderable for ModuleImport {
     }
 }
 impl Renderable for ModuleInclude {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Expr>(self, renderer)
     }
 }
 impl Renderable for LoopBreak {}
 impl Renderable for LoopContinue {}
 impl Renderable for FuncReturn {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Expr>(self, renderer)
     }
 }
 
 impl Renderable for Pattern {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         match self {
             Pattern::Normal(expr) => expr.render(renderer),
             Pattern::Placeholder(underscore) => render_anon(underscore.as_untyped(), renderer),
@@ -464,15 +476,13 @@ impl Renderable for Pattern {
 }
 
 impl Renderable for Destructuring {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Ident>(self, renderer)
     }
 }
 
 impl Renderable for Named {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         for child in self.as_untyped().children() {
             if let Some(expr) = child.cast::<Expr>() {
                 expr.render(renderer);
@@ -488,22 +498,19 @@ impl Renderable for Named {
 }
 
 impl Renderable for Spread {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text_2::<Expr, Ident>(self, renderer)
     }
 }
 
 impl Renderable for Keyed {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         render_children_typed_or_text::<Expr>(self, renderer)
     }
 }
 
 impl Renderable for Arg {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         match self {
             Arg::Pos(expr) | Arg::Spread(expr) => {
                 expr.render(renderer);
@@ -514,8 +521,7 @@ impl Renderable for Arg {
 }
 
 impl Renderable for Param {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         match self {
             Param::Pos(pat) => pat.render(renderer),
             Param::Named(named) => named.render(renderer),
@@ -525,8 +531,7 @@ impl Renderable for Param {
 }
 
 impl Renderable for ArrayItem {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         match self {
             ArrayItem::Pos(expr) | ArrayItem::Spread(expr) => expr.render(renderer),
         }
@@ -534,8 +539,7 @@ impl Renderable for ArrayItem {
 }
 
 impl Renderable for DictItem {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         match self {
             DictItem::Named(named) => named.render(renderer),
             DictItem::Keyed(keyed) => keyed.render(renderer),
@@ -545,8 +549,7 @@ impl Renderable for DictItem {
 }
 
 impl Renderable for Expr {
-    fn render(&self, renderer: &mut Renderer) {
-        debug!(?self, "rendering");
+    fn render_impl(&self, renderer: &mut Renderer) {
         match self {
             Expr::Text(node) => node.render(renderer),
             Expr::Space(node) => node.render(renderer),
@@ -625,22 +628,10 @@ fn render_args(node: &SyntaxNode, renderer: &mut Renderer) {
 
 fn render_params(node: &SyntaxNode, renderer: &mut Renderer) {
     debug!(?node, "render_params");
-    let total = node.children().count();
-    let children = node.children();
-    for (i, child) in children.enumerate() {
+    let mut children = Children::new(node);
+    while let Some(child) = children.next() {
         if let Some(param) = child.cast::<Param>() {
             param.render(renderer);
-            if renderer.config().spacing && i + 2 < total {
-                renderer.writer.push(", ");
-            }
-        } else if child.kind() == SyntaxKind::LeftParen {
-            renderer.writer.push("(").inc_indent();
-        } else if child.kind() == SyntaxKind::RightParen {
-            renderer.writer.dec_indent().push(")");
-        } else if child.kind() == SyntaxKind::Comma {
-            if !renderer.config().spacing {
-                render_anon(child, renderer);
-            }
         } else {
             render_anon(child, renderer);
         }

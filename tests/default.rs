@@ -31,7 +31,7 @@ test_snippet!(
 );
 
 test_snippet!(
-    content_block,
+    content_block_indent,
     expect = "#[\n    *strong*\n    normal\n    _emph_\n\n    new para\n]",
     "#[\n*strong*\nnormal\n_emph_\n\nnew para\n]",
 );

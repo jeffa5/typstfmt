@@ -55,15 +55,37 @@ impl Writer {
 
     /// Increases the current indentation level by the amount specified in the style.
     pub fn inc_indent(&mut self) -> &mut Self {
+        debug!("inc_indent");
         self.indent_level = self.indent_level.saturating_add(self.config.indent);
         self
     }
 
     /// Decreases the current indentation level by the amount specified in the style.
     pub fn dec_indent(&mut self) -> &mut Self {
+        debug!("dec_indent");
         self.indent_level = self.indent_level.saturating_sub(self.config.indent);
         self
     }
+
+    pub fn open_grouping(&mut self, text: &str) -> &mut Self {
+        debug!(?text, "open grouping");
+        self.push(text).inc_indent();
+        self
+    }
+
+    pub fn close_grouping(&mut self, text: &str) -> &mut Self {
+        debug!(?text, "close grouping");
+        // remove the previous indent if there was one
+        if self.value.ends_with(&self.current_indent()) {
+            for _ in 0..self.config.indent {
+                self.value.remove(self.value.len() - 1);
+            }
+        }
+        self.dec_indent();
+        self.push(text);
+        self
+    }
+
 
     /// Get the written value.
     pub fn finish(self) -> String {
