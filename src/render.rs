@@ -396,11 +396,17 @@ impl Renderable for LetBinding {
             } else if let Some(named) = child.cast::<Pattern>() {
                 named.render(renderer);
             } else if child.kind() == SyntaxKind::Eq {
-                if !children.peek_prev().map_or(false, |n| n.text().ends_with(" ")) {
+                if !children
+                    .peek_prev()
+                    .map_or(false, |n| n.text().ends_with(" "))
+                {
                     renderer.writer.push(" ");
                 }
                 renderer.writer.push("=");
-                if !children.peek_next().map_or(false, |n| n.text().starts_with(" ")) {
+                if !children
+                    .peek_next()
+                    .map_or(false, |n| n.text().starts_with(" "))
+                {
                     renderer.writer.push(" ");
                 }
             } else if child.kind() == SyntaxKind::Let {
