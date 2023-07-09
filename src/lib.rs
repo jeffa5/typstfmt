@@ -24,6 +24,9 @@ pub enum FormatError {
     /// Invalid code was given, we don't try to format erroneous things.
     #[error("The input contained errors, not formatting")]
     ErroneousInput,
+    /// The formatter produced an invalid output, not letting it get written out.
+    #[error("An internal error produced an erroneous output")]
+    ProducedErroneousOutput,
 }
 
 /// Format some typst code.
@@ -45,5 +48,13 @@ pub fn format(input: &str, config: Config) -> Result<String, FormatError> {
     let mut renderer = Renderer { writer };
     renderer.render(root);
 
-    Ok(renderer.finish())
+    let output = renderer.finish();
+
+    let reparsed = parse(&output);
+    if reparsed.erroneous() {
+        debug!("Formatted text contained errors!");
+        return Err(FormatError::ProducedErroneousOutput);
+    }
+
+    Ok(output)
 }
