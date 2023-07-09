@@ -633,13 +633,15 @@ impl Renderable for Expr {
 // TODO: can't use ArrayItem instead of Expr here because the spread variant doesn't
 // include the dots.
 fn render_args(node: &SyntaxNode, renderer: &mut Renderer) {
-    debug!(?node, "render_args");
     let mut children = Children::new(node);
     let multiline = children.any(|c| c.kind() == SyntaxKind::Space && c.text().contains("\n"));
+    debug!(?node, ?multiline, "render_args");
     let past_argument = |children: &Children, renderer: &mut Renderer| {
         if multiline {
             renderer.writer.push(",").newline_with_indent();
-        } else if children.has_next(|k| !k.is_trivia() && !k.is_grouping()) {
+        } else if children
+            .has_next(|k| !k.is_trivia() && !k.is_grouping() && k != SyntaxKind::ContentBlock)
+        {
             renderer.writer.push(", ");
         }
     };

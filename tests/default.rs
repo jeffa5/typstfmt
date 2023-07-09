@@ -1,7 +1,11 @@
 #[macro_use]
 mod common;
 
-test_snippet!(comments, expect = "// a line comment\n", "// a line comment",);
+test_snippet!(
+    comments,
+    expect = "// a line comment\n",
+    "// a line comment",
+);
 
 test_snippet!(
     codeblock_single,
@@ -23,6 +27,10 @@ test_snippet!(
     expect = "#let f(a, b, c) = {a + (b - c)}",
     "#let f(a,b,c) = {a+(b - c)}",
 );
+
+test_snippet!(function_content_arg, expect = "#k(2)[]", "#k(2)[]",);
+
+test_snippet!(function_content_args, expect = "#k[][]", "#k[][]",);
 
 test_snippet!(
     function_multi_line,
