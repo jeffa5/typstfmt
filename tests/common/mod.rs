@@ -21,12 +21,11 @@ macro_rules! test_snippet {
 #[allow(unused_macros)]
 macro_rules! test_snippet_reformat {
     (
-        $test_name:ident,
         $(ignore = $ignore:tt ,)?
+        $test_name:ident,
         $snippet:expr,
     ) => {
         #[test]
-        $(#[ignore = $ignore])?
         fn $test_name() {
             let _ = tracing_subscriber::fmt().with_test_writer().with_max_level(tracing::Level::DEBUG).try_init();
             let formatted = typstfmt::format($snippet, typstfmt::Config::default()).unwrap();
