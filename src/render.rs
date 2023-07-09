@@ -43,6 +43,8 @@ fn render_anon(node: &SyntaxNode, renderer: &mut Renderer) {
             }
             _ => unreachable!(),
         }
+    } else if node.kind() == SyntaxKind::LineComment {
+        renderer.writer.push(&node.text()).newline_with_indent();
     } else {
         renderer.writer.push(&node.text());
         for child in node.children() {
@@ -222,7 +224,7 @@ impl Renderable for Linebreak {}
 impl Renderable for Parbreak {
     fn render_impl(&self, renderer: &mut Renderer) {
         if renderer.config().spacing {
-            renderer.writer.newline().newline_with_indent();
+            renderer.writer.parbreak();
         } else {
             render_anon(self.as_untyped(), renderer)
         }

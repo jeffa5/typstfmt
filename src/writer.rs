@@ -40,15 +40,27 @@ impl Writer {
         self
     }
 
+    pub fn parbreak(&mut self) -> &mut Self {
+        self.newline().newline().indent();
+        self
+    }
+
     /// Appends a newline character to the buffer, followed by
     /// the current indentation level in spaces.
     pub fn newline_with_indent(&mut self) -> &mut Self {
+        if self
+            .value
+            .ends_with(&format!("\n{}", self.current_indent()))
+        {
+            // prevent double newlines
+            return self;
+        }
         self.newline().indent();
         self
     }
 
     /// Appends a newline character to the buffer.
-    pub fn newline(&mut self) -> &mut Self {
+    fn newline(&mut self) -> &mut Self {
         self.push("\n");
         self
     }

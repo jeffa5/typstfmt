@@ -1,7 +1,7 @@
 #[macro_use]
 mod common;
 
-test_snippet!(comments, expect = "// a line comment", "// a line comment",);
+test_snippet!(comments, expect = "// a line comment\n", "// a line comment",);
 
 test_snippet!(
     codeblock_single,
@@ -26,8 +26,8 @@ test_snippet!(
 
 test_snippet!(
     function_multi_line,
-    expect = "#let f(\n    a,\n    b,\n    c,\n) = {a + (b - c)}",
-    "#let f(a,\nb,c) = {a+(b - c)}",
+    expect = "#let f(\n    /// test comment\n    a,\n    /// another comment\n    b,\n    c,\n) = {a + (b - c)}",
+    "#let f(/// test comment\na,\n/// another comment\nb,c) = {a+(b - c)}",
 );
 
 test_snippet!(
