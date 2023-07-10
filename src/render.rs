@@ -167,11 +167,11 @@ impl<'a> Children<'a> {
     }
 
     fn peek_next(&self) -> Option<&&SyntaxNode> {
-        self.items.get(self.index + 1)
+        self.items.get(self.index)
     }
 
     fn peek_prev(&self) -> Option<&&SyntaxNode> {
-        self.index.checked_sub(1).and_then(|i| self.items.get(i))
+        self.index.checked_sub(2).and_then(|i| self.items.get(i))
     }
 }
 
@@ -445,17 +445,15 @@ impl Renderable for LetBinding {
             } else if let Some(named) = child.cast::<Pattern>() {
                 named.render(renderer);
             } else if child.kind() == SyntaxKind::Eq {
-                if !children
-                    .peek_prev()
-                    .map_or(false, |n| n.text().ends_with(" "))
-                {
+                if !children.peek_prev().map_or(false, |n| {
+                    n.kind() != SyntaxKind::Space && n.text().ends_with(" ")
+                }) {
                     renderer.writer.push(" ");
                 }
                 renderer.writer.push("=");
-                if !children
-                    .peek_next()
-                    .map_or(false, |n| n.text().starts_with(" "))
-                {
+                if !children.peek_next().map_or(false, |n| {
+                    n.kind() != SyntaxKind::Space && n.text().starts_with(" ")
+                }) {
                     renderer.writer.push(" ");
                 }
             } else if child.kind() == SyntaxKind::Let {
@@ -499,7 +497,29 @@ impl Renderable for ShowRule {
 }
 impl Renderable for Conditional {
     fn render_impl(&self, renderer: &mut Renderer) {
-        render_children_typed_or_text::<Expr>(self, renderer)
+        let mut children = Children::new(self.as_untyped());
+        let spacing = |children: &Children, renderer: &mut Renderer| {
+            if children.peek_prev().map_or(false, |p| {
+                dbg!(p.kind()) == SyntaxKind::Space && dbg!(p.text()).contains("\n")
+            }) {
+                renderer.writer.newline_with_indent();
+            } else {
+                renderer.writer.push(" ");
+            }
+        };
+        while let Some(child) = children.next() {
+            if let Some(expr) = child.cast::<Expr>() {
+                spacing(&children, renderer);
+                expr.render(renderer);
+            } else if child.kind() == SyntaxKind::Else {
+                spacing(&children, renderer);
+                renderer.writer.push("else");
+            } else if child.kind() == SyntaxKind::Space {
+                // skip
+            } else {
+                render_anon(child, renderer);
+            }
+        }
     }
 }
 impl Renderable for WhileLoop {

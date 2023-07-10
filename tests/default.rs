@@ -119,9 +119,28 @@ f(
 
 test_snippet! {
     conditional_spacing,
-    ignore = "conditional spacing",
-    expect = r##"#if false {} else if true{} else {}"##,
+    expect = r##"#if false {} else if true {} else {}"##,
     r##"#if false{}else if true{}else{}"##,
+}
+
+test_snippet! {
+    conditional_spaces,
+    expect = r##"#if false {} else if true {} else {}"##,
+    r##"#if          false        {}       else      if      true       {}   else   {}"##,
+}
+
+test_snippet! {
+    conditional_newlines,
+    expect = r##"#{
+    if false {}
+    else if true {}
+    else {}
+}"##,
+    r##"#{
+    if false {}
+else if true {}
+else {}
+}"##,
 }
 
 test_snippet! {
