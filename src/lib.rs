@@ -62,6 +62,7 @@ pub fn format(input: &str, config: Config) -> Result<String, FormatError> {
         return Err(FormatError::ProducedErroneousOutput);
     }
 
+    debug!(?output, "checking for fixed point");
     let writer2 = Writer::new(config);
     let mut renderer2 = Renderer { writer: writer2 };
     renderer2.render(reparsed);
