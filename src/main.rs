@@ -85,9 +85,10 @@ fn main() -> anyhow::Result<()> {
             } else {
                 info!(?path, "Input is already formatted");
             }
+        } else {
+            let mut file = File::create(&path)?;
+            file.write_all(formatted.as_bytes())?;
         }
-        let mut file = File::create(&path)?;
-        file.write_all(formatted.as_bytes())?;
     }
 
     if args.check && !check_ok {
