@@ -8,7 +8,7 @@
 //! get formatted.
 
 use tracing::debug;
-use typst::syntax::parse;
+use typst::syntax::{parse, SyntaxKind, SyntaxNode};
 
 mod config;
 mod render;
@@ -32,6 +32,15 @@ pub enum FormatError {
     FailedToFindFixedPoint,
 }
 
+/// Check the parsed tree for error nodes, not relying on the in-built `erroneous` field/function.
+/// e.g. https://github.com/typst/typst/issues/1690
+fn erroneous(node: &SyntaxNode) -> bool {
+    if node.kind() == SyntaxKind::Error {
+        return true;
+    }
+    node.children().any(erroneous)
+}
+
 /// Format some typst code.
 ///
 /// This first ensures that it is valid typst, returning an error if not.
@@ -40,7 +49,7 @@ pub fn format(input: &str, config: Config) -> Result<String, FormatError> {
     debug!("input: {input:?}");
     let init = parse(input);
     // don't try to format things that aren't valid
-    if init.erroneous() {
+    if erroneous(&init) {
         debug!("Not formatting erroneous input");
         return Err(FormatError::ErroneousInput);
     }
@@ -53,7 +62,7 @@ pub fn format(input: &str, config: Config) -> Result<String, FormatError> {
     let output = renderer.finish();
 
     let reparsed = parse(&output);
-    if reparsed.erroneous() {
+    if erroneous(&reparsed) {
         debug!(?output, "Formatted text contained errors!");
         let errors = reparsed.errors();
         for error in errors {
