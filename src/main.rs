@@ -3,7 +3,9 @@ use std::io::Read;
 use std::io::Write;
 use std::path::PathBuf;
 use tracing::info;
+use tracing::metadata::LevelFilter;
 use tracing::warn;
+use tracing_subscriber::EnvFilter;
 use typstfmt::format;
 
 use clap::Parser;
@@ -11,7 +13,7 @@ use clap::Parser;
 #[derive(Parser, Debug)]
 #[command(version = "0.1.0", about = "Format typst code")]
 struct Args {
-    /// A file to format. If not specified, all .typ file will be formatted
+    /// A file or directory to format. If not specified, all .typ files in the current directory will be formatted.
     files: Vec<PathBuf>,
 
     #[arg(long, default_value = "typstfmt.toml")]
@@ -26,13 +28,31 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
+        .with_env_filter(
+            EnvFilter::builder()
+                .with_default_directive(LevelFilter::INFO.into())
+                .from_env_lossy(),
+        )
         .init();
 
-    let paths = if !args.files.is_empty() {
+    let paths: Vec<_> = if !args.files.is_empty() {
         args.files
+            .iter()
+            .flat_map(|f| {
+                if f.is_file() {
+                    vec![f.to_owned()]
+                } else {
+                    globmatch::Builder::new("**/*.typ")
+                        .build(f)
+                        .unwrap()
+                        .into_iter()
+                        .filter_map(|p| p.ok())
+                        .collect()
+                }
+            })
+            .collect()
     } else {
-        let glob = globmatch::Builder::new("**.typ").build(".").unwrap();
+        let glob = globmatch::Builder::new("**/*.typ").build(".").unwrap();
         glob.into_iter().flat_map(|path| path.ok()).collect()
     };
 
