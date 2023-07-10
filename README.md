@@ -24,8 +24,8 @@ You can configure some aspects of the formatting with a `typstfmt.toml` file in 
 The default configuration is:
 
 ```toml
-indent = 4 // spaces
-spacing = true // whether to manage spacing
+indent = 4 # spaces
+spacing = true # whether to manage spacing
 ```
 
 ## Development

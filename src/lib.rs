@@ -4,7 +4,7 @@
 //!
 //! Format typst code.
 //!
-//! [`format`] is the main point of interest, with [`Config`] for adding some options on how things
+//! [`format()`] is the main point of interest, with [`Config`] for adding some options on how things
 //! get formatted.
 
 use tracing::debug;
