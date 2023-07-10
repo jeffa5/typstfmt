@@ -101,7 +101,7 @@ fn format_file(path: &Path, args: &Args) -> anyhow::Result<()> {
     let formatted = format(&content, config)?;
     if args.check {
         if formatted != content {
-            anyhow::bail!("Output still needs formatting, please report this at https://github.com/jeffa5/typstfmt");
+            anyhow::bail!("Output still needs formatting, please report this at https://github.com/jeffa5/typstfmt/issues/new");
         }
     } else {
         let mut file = File::create(&path)?;
