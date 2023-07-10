@@ -348,9 +348,12 @@ impl Renderable for Dict {
         let past_argument = |children: &Children, renderer: &mut Renderer| {
             if multiline {
                 renderer.writer.push(",").newline_with_indent();
-            } else if children
-                .has_next(|k| !k.is_trivia() && !k.is_grouping() && k != SyntaxKind::ContentBlock)
-            {
+            } else if children.has_next(|k| {
+                !k.is_trivia()
+                    && !k.is_grouping()
+                    && k != SyntaxKind::ContentBlock
+                    && k != SyntaxKind::Comma
+            }) {
                 renderer.writer.push(", ");
             }
         };

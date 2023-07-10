@@ -123,3 +123,9 @@ test_snippet! {
     expect = r##"#if false {} else if true{} else {}"##,
     r##"#if false{}else if true{}else{}"##,
 }
+
+test_snippet! {
+    nested_array_with_args,
+    expect = r##"#((d: 2),)"##,
+    r##"#((d: 2,),)"##,
+}
