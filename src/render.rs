@@ -35,30 +35,30 @@ fn render_anon(node: &SyntaxNode, renderer: &mut Renderer) {
     } else if node.kind().is_grouping() {
         match node.kind() {
             SyntaxKind::LeftBrace | SyntaxKind::LeftParen | SyntaxKind::LeftBracket => {
-                renderer.writer.open_grouping(&node.text());
+                renderer.writer.open_grouping(node.text());
             }
             SyntaxKind::RightBrace | SyntaxKind::RightParen | SyntaxKind::RightBracket => {
-                renderer.writer.close_grouping(&node.text());
+                renderer.writer.close_grouping(node.text());
             }
             _ => unreachable!(),
         }
     } else if node.kind() == SyntaxKind::LineComment {
-        renderer.writer.push(&node.text()).newline_with_indent();
+        renderer.writer.push(node.text()).newline_with_indent();
     } else if node.kind() == SyntaxKind::BlockComment {
-        if node.text().contains("\n") {
+        if node.text().contains('\n') {
             for line in node.text().lines() {
                 let line = line.trim();
-                if line.starts_with("*") {
+                if line.starts_with('*') {
                     // align the stars
                     renderer.writer.push(" ");
                 }
                 renderer.writer.push(line).newline_with_indent();
             }
         } else {
-            renderer.writer.push(&node.text()).newline_with_indent();
+            renderer.writer.push(node.text()).newline_with_indent();
         }
     } else {
-        renderer.writer.push(&node.text());
+        renderer.writer.push(node.text());
         for child in node.children() {
             render_anon(child, renderer)
         }
@@ -212,7 +212,7 @@ impl Renderable for Space {
     fn render_impl(&self, renderer: &mut Renderer) {
         if renderer.config().spacing {
             let text = self.as_untyped().text();
-            if text.contains("\n") {
+            if text.contains('\n') {
                 // convert newlines to newlines with indent
                 renderer.writer.newline_with_indent();
             } else {
@@ -344,7 +344,7 @@ impl Renderable for Array {
 impl Renderable for Dict {
     fn render_impl(&self, renderer: &mut Renderer) {
         let mut children = Children::new(self.as_untyped());
-        let multiline = children.any(|c| c.kind() == SyntaxKind::Space && c.text().contains("\n"));
+        let multiline = children.any(|c| c.kind() == SyntaxKind::Space && c.text().contains('\n'));
         let past_argument = |children: &Children, renderer: &mut Renderer| {
             if multiline {
                 renderer.writer.push(",").newline_with_indent();
@@ -370,7 +370,7 @@ impl Renderable for Dict {
             } else if multiline && child.kind() == SyntaxKind::LeftParen {
                 renderer
                     .writer
-                    .open_grouping(&child.text())
+                    .open_grouping(child.text())
                     .newline_with_indent();
             } else if child.kind() == SyntaxKind::Comma {
                 // skip
@@ -393,7 +393,7 @@ impl Renderable for Binary {
             if let Some(expr) = child.cast::<Expr>() {
                 expr.render(renderer);
             } else if BinOp::from_kind(child.kind()).is_some() && renderer.config().spacing {
-                renderer.writer.push(" ").push(&child.text()).push(" ");
+                renderer.writer.push(" ").push(child.text()).push(" ");
             } else if child.kind() == SyntaxKind::Space {
                 // skip
             } else {
@@ -446,13 +446,13 @@ impl Renderable for LetBinding {
                 named.render(renderer);
             } else if child.kind() == SyntaxKind::Eq {
                 if !children.peek_prev().map_or(false, |n| {
-                    n.kind() != SyntaxKind::Space && n.text().ends_with(" ")
+                    n.kind() != SyntaxKind::Space && n.text().ends_with(' ')
                 }) {
                     renderer.writer.push(" ");
                 }
                 renderer.writer.push("=");
                 if !children.peek_next().map_or(false, |n| {
-                    n.kind() != SyntaxKind::Space && n.text().starts_with(" ")
+                    n.kind() != SyntaxKind::Space && n.text().starts_with(' ')
                 }) {
                     renderer.writer.push(" ");
                 }
@@ -500,7 +500,7 @@ impl Renderable for Conditional {
         let mut children = Children::new(self.as_untyped());
         let spacing = |children: &Children, renderer: &mut Renderer| {
             if children.peek_prev().map_or(false, |p| {
-                p.kind() == SyntaxKind::Space && p.text().contains("\n")
+                p.kind() == SyntaxKind::Space && p.text().contains('\n')
             }) {
                 renderer.writer.newline_with_indent();
             } else {
@@ -709,7 +709,7 @@ impl Renderable for Expr {
 // include the dots.
 fn render_args(node: &SyntaxNode, renderer: &mut Renderer) {
     let mut children = Children::new(node);
-    let multiline = children.any(|c| c.kind() == SyntaxKind::Space && c.text().contains("\n"));
+    let multiline = children.any(|c| c.kind() == SyntaxKind::Space && c.text().contains('\n'));
     debug!(?node, ?multiline, "render_args");
     let mut in_parens = false;
     let past_argument = |children: &Children, renderer: &mut Renderer, in_parens: bool| {
@@ -738,7 +738,7 @@ fn render_args(node: &SyntaxNode, renderer: &mut Renderer) {
             if multiline {
                 renderer
                     .writer
-                    .open_grouping(&child.text())
+                    .open_grouping(child.text())
                     .newline_with_indent();
             } else {
                 render_anon(child, renderer);
@@ -759,7 +759,7 @@ fn render_args(node: &SyntaxNode, renderer: &mut Renderer) {
 fn render_params(node: &SyntaxNode, renderer: &mut Renderer) {
     debug!(?node, "render_params");
     let mut children = Children::new(node);
-    let multiline = children.any(|c| c.kind() == SyntaxKind::Space && c.text().contains("\n"));
+    let multiline = children.any(|c| c.kind() == SyntaxKind::Space && c.text().contains('\n'));
     while let Some(child) = children.next() {
         if let Some(param) = child.cast::<Param>() {
             param.render(renderer);
@@ -771,7 +771,7 @@ fn render_params(node: &SyntaxNode, renderer: &mut Renderer) {
         } else if multiline && child.kind() == SyntaxKind::LeftParen {
             renderer
                 .writer
-                .open_grouping(&child.text())
+                .open_grouping(child.text())
                 .newline_with_indent();
         } else if child.kind() == SyntaxKind::Comma {
             // skip

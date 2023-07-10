@@ -46,7 +46,7 @@ impl Writer {
     }
 
     pub fn space(&mut self) -> &mut Self {
-        if self.value.ends_with("\n") {
+        if self.value.ends_with('\n') {
             // never push a space after a newline, that should be handled by `newline_with_indent`
             return self;
         }

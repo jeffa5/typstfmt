@@ -81,7 +81,7 @@ fn main() -> anyhow::Result<()> {
 fn format_file(path: &Path, args: &Args) -> anyhow::Result<()> {
     let mut file = File::options()
         .read(true)
-        .open(&path)
+        .open(path)
         .unwrap_or_else(|e| panic!("Couldn't open file : {e}"));
     let mut content = String::with_capacity(1024);
     file.read_to_string(&mut content)?;
@@ -104,7 +104,7 @@ fn format_file(path: &Path, args: &Args) -> anyhow::Result<()> {
             anyhow::bail!("Output still needs formatting");
         }
     } else {
-        let mut file = File::create(&path)?;
+        let mut file = File::create(path)?;
         file.write_all(formatted.as_bytes())?;
     }
     Ok(())
