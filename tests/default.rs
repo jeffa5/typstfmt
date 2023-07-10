@@ -126,6 +126,14 @@ test_snippet! {
 
 test_snippet! {
     nested_array_with_args,
+    ignore = "invalid parsing: contains error",
     expect = r##"#((d: 2),)"##,
     r##"#((d: 2,),)"##,
+}
+
+test_snippet! {
+    nested_array_with_args_2,
+    // ignore = "invalid parsing: contains error",
+    expect = r##"#((d: 2))"##,
+    r##"#((d: 2 ,))"##,
 }
