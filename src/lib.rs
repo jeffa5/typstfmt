@@ -8,7 +8,7 @@
 //! get formatted.
 
 use tracing::debug;
-use typst::syntax::{parse, LinkedNode};
+use typst::syntax::parse;
 
 mod config;
 mod render;
@@ -27,6 +27,9 @@ pub enum FormatError {
     /// The formatter produced an invalid output, not letting it get written out.
     #[error("An internal error produced an erroneous output")]
     ProducedErroneousOutput,
+    /// The formatter failed to find a fixed point, formatting again will change it.
+    #[error("Failed to find fixed point, reformat will not pass check")]
+    FailedToFindFixedPoint,
 }
 
 /// Format some typst code.
@@ -41,12 +44,11 @@ pub fn format(input: &str, config: Config) -> Result<String, FormatError> {
         debug!("Not formatting erroneous input");
         return Err(FormatError::ErroneousInput);
     }
-    let root = LinkedNode::new(&init);
     debug!("parsed: {init:?}");
     let writer = Writer::new(config);
 
     let mut renderer = Renderer { writer };
-    renderer.render(root);
+    renderer.render(init);
 
     let output = renderer.finish();
 
@@ -58,6 +60,15 @@ pub fn format(input: &str, config: Config) -> Result<String, FormatError> {
             debug!(?error, "error");
         }
         return Err(FormatError::ProducedErroneousOutput);
+    }
+
+    let writer2 = Writer::new(config);
+    let mut renderer2 = Renderer { writer: writer2 };
+    renderer2.render(reparsed);
+    let output2 = renderer2.finish();
+    if output != output2 {
+        debug!(?output, "Formatted text would not pass check");
+        return Err(FormatError::FailedToFindFixedPoint);
     }
 
     Ok(output)

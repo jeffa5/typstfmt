@@ -1,7 +1,7 @@
 use std::unreachable;
 
 use tracing::debug;
-use typst::syntax::{ast::*, LinkedNode, SyntaxKind, SyntaxNode};
+use typst::syntax::{ast::*, SyntaxKind, SyntaxNode};
 
 use crate::{writer::Writer, Config};
 
@@ -12,7 +12,7 @@ pub struct Renderer {
 
 impl Renderer {
     /// Render the AST from the given node.
-    pub fn render(&mut self, node: LinkedNode) {
+    pub fn render(&mut self, node: SyntaxNode) {
         debug!(?node, "render");
         node.cast::<Markup>().unwrap().render(self)
     }
