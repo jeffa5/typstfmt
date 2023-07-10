@@ -658,6 +658,9 @@ fn render_args(node: &SyntaxNode, renderer: &mut Renderer) {
         } else if let Some(named) = child.cast::<Named>() {
             named.render(renderer);
             past_argument(&children, renderer);
+        } else if let Some(spread) = child.cast::<Spread>() {
+            spread.render(renderer);
+            past_argument(&children, renderer);
         } else if multiline && child.kind() == SyntaxKind::LeftParen {
             renderer
                 .writer

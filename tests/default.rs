@@ -28,6 +28,12 @@ test_snippet!(
     "#let f(a,b,c) = {a+(b - c)}",
 );
 
+test_snippet!(
+    function_spread_arg,
+    expect = "#f(..s, k: v)",
+    "#f(..s, k: v)",
+);
+
 test_snippet!(function_content_arg, expect = "#k(2)[]", "#k(2)[]",);
 
 test_snippet!(function_content_args, expect = "#k[][]", "#k[][]",);
