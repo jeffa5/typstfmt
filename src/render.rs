@@ -330,7 +330,40 @@ impl Renderable for Array {
 }
 impl Renderable for Dict {
     fn render_impl(&self, renderer: &mut Renderer) {
-        render_children_typed_or_text::<DictItem>(self, renderer)
+        let mut children = Children::new(self.as_untyped());
+        let multiline = children.any(|c| c.kind() == SyntaxKind::Space && c.text().contains("\n"));
+        let past_argument = |children: &Children, renderer: &mut Renderer| {
+            if multiline {
+                renderer.writer.push(",").newline_with_indent();
+            } else if children
+                .has_next(|k| !k.is_trivia() && !k.is_grouping() && k != SyntaxKind::ContentBlock)
+            {
+                renderer.writer.push(", ");
+            }
+        };
+        while let Some(child) = children.next() {
+            if let Some(expr) = child.cast::<Keyed>() {
+                expr.render(renderer);
+                past_argument(&children, renderer);
+            } else if let Some(named) = child.cast::<Named>() {
+                named.render(renderer);
+                past_argument(&children, renderer);
+            } else if let Some(spread) = child.cast::<Spread>() {
+                spread.render(renderer);
+                past_argument(&children, renderer);
+            } else if multiline && child.kind() == SyntaxKind::LeftParen {
+                renderer
+                    .writer
+                    .open_grouping(&child.text())
+                    .newline_with_indent();
+            } else if child.kind() == SyntaxKind::Comma {
+                // skip
+            } else if child.kind() == SyntaxKind::Space {
+                // skip
+            } else {
+                render_anon(child, renderer);
+            }
+        }
     }
 }
 impl Renderable for Unary {

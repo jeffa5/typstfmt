@@ -44,6 +44,8 @@ test_snippet!(
     "#let f(/// test comment\na,\n/// another comment\nb,c) = {a+(b - c)}",
 );
 
+test_snippet!(dict_spread_arg, expect = "#(..t, p: p)", "#(..t,p:p)",);
+
 test_snippet!(
     content,
     expect = "*strong*\nnormal\n_emph_\n\nnew para",
