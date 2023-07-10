@@ -44,6 +44,19 @@ fn render_anon(node: &SyntaxNode, renderer: &mut Renderer) {
         }
     } else if node.kind() == SyntaxKind::LineComment {
         renderer.writer.push(&node.text()).newline_with_indent();
+    } else if node.kind() == SyntaxKind::BlockComment {
+        if node.text().contains("\n") {
+            for line in node.text().lines() {
+                let line = line.trim();
+                if line.starts_with("*") {
+                    // align the stars
+                    renderer.writer.push(" ");
+                }
+                renderer.writer.push(line).newline_with_indent();
+            }
+        } else {
+            renderer.writer.push(&node.text()).newline_with_indent();
+        }
     } else {
         renderer.writer.push(&node.text());
         for child in node.children() {
@@ -675,30 +688,41 @@ fn render_args(node: &SyntaxNode, renderer: &mut Renderer) {
     let mut children = Children::new(node);
     let multiline = children.any(|c| c.kind() == SyntaxKind::Space && c.text().contains("\n"));
     debug!(?node, ?multiline, "render_args");
-    let past_argument = |children: &Children, renderer: &mut Renderer| {
-        if multiline {
-            renderer.writer.push(",").newline_with_indent();
-        } else if children
-            .has_next(|k| !k.is_trivia() && !k.is_grouping() && k != SyntaxKind::ContentBlock)
-        {
-            renderer.writer.push(", ");
+    let mut in_parens = false;
+    let past_argument = |children: &Children, renderer: &mut Renderer, in_parens: bool| {
+        if in_parens {
+            if multiline {
+                renderer.writer.push(",").newline_with_indent();
+            } else if children
+                .has_next(|k| !k.is_trivia() && !k.is_grouping() && k != SyntaxKind::ContentBlock)
+            {
+                renderer.writer.push(", ");
+            }
         }
     };
     while let Some(child) = children.next() {
         if let Some(expr) = child.cast::<Expr>() {
             expr.render(renderer);
-            past_argument(&children, renderer);
+            past_argument(&children, renderer, in_parens);
         } else if let Some(named) = child.cast::<Named>() {
             named.render(renderer);
-            past_argument(&children, renderer);
+            past_argument(&children, renderer, in_parens);
         } else if let Some(spread) = child.cast::<Spread>() {
             spread.render(renderer);
-            past_argument(&children, renderer);
-        } else if multiline && child.kind() == SyntaxKind::LeftParen {
-            renderer
-                .writer
-                .open_grouping(&child.text())
-                .newline_with_indent();
+            past_argument(&children, renderer, in_parens);
+        } else if child.kind() == SyntaxKind::LeftParen {
+            in_parens = true;
+            if multiline {
+                renderer
+                    .writer
+                    .open_grouping(&child.text())
+                    .newline_with_indent();
+            } else {
+                render_anon(child, renderer);
+            }
+        } else if child.kind() == SyntaxKind::RightParen {
+            in_parens = false;
+            render_anon(child, renderer);
         } else if child.kind() == SyntaxKind::Comma {
             // skip
         } else if child.kind() == SyntaxKind::Space {

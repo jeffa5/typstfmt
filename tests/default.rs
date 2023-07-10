@@ -96,3 +96,23 @@ Dear Joe,
 
 Best,"#,
 );
+
+test_snippet! {
+    function_content_arg_multiline,
+    expect = r##"#{
+    f(
+    )[
+        /* starts
+         * the body
+         */
+    ]
+}"##,
+    r##"#{
+f(
+)[
+/* starts
+  * the body
+*/
+]
+}"##,
+}
