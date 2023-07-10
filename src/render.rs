@@ -372,9 +372,7 @@ impl Renderable for Dict {
                     .writer
                     .open_grouping(child.text())
                     .newline_with_indent();
-            } else if child.kind() == SyntaxKind::Comma {
-                // skip
-            } else if child.kind() == SyntaxKind::Space {
+            } else if child.kind() == SyntaxKind::Comma || child.kind() == SyntaxKind::Space {
                 // skip
             } else {
                 render_anon(child, renderer);
@@ -746,9 +744,7 @@ fn render_args(node: &SyntaxNode, renderer: &mut Renderer) {
         } else if child.kind() == SyntaxKind::RightParen {
             in_parens = false;
             render_anon(child, renderer);
-        } else if child.kind() == SyntaxKind::Comma {
-            // skip
-        } else if child.kind() == SyntaxKind::Space {
+        } else if child.kind() == SyntaxKind::Comma || child.kind() == SyntaxKind::Space {
             // skip
         } else {
             render_anon(child, renderer);
@@ -773,9 +769,7 @@ fn render_params(node: &SyntaxNode, renderer: &mut Renderer) {
                 .writer
                 .open_grouping(child.text())
                 .newline_with_indent();
-        } else if child.kind() == SyntaxKind::Comma {
-            // skip
-        } else if child.kind() == SyntaxKind::Space {
+        } else if child.kind() == SyntaxKind::Comma || child.kind() == SyntaxKind::Space {
             // skip
         } else {
             render_anon(child, renderer);
