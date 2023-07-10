@@ -1,7 +1,9 @@
 use std::fs::File;
 use std::io::Read;
 use std::io::Write;
+use std::path::Path;
 use std::path::PathBuf;
+use tracing::debug;
 use tracing::info;
 use tracing::metadata::LevelFilter;
 use tracing::warn;
@@ -58,36 +60,14 @@ fn main() -> anyhow::Result<()> {
 
     let mut check_ok = true;
     for path in paths.into_iter() {
-        let mut file = File::options()
-            .read(true)
-            .open(&path)
-            .unwrap_or_else(|e| panic!("Couldn't open file : {e}"));
-        let mut content = String::with_capacity(1024);
-        file.read_to_string(&mut content)?;
-        drop(file);
-
-        let config = if args.config_path.is_file() {
-            let mut config_file = File::open(&args.config_path)?;
-            let mut config_file_content = String::new();
-            config_file.read_to_string(&mut config_file_content)?;
-            toml::from_str(&config_file_content)?
-        } else {
-            typstfmt::Config::default()
-        };
-
-        info!(?path, "Formatting input");
-
-        let formatted = format(&content, config)?;
-        if args.check {
-            if formatted != content {
-                warn!(?path, "Input needs formatting");
-                check_ok = false;
-            } else {
-                info!(?path, "Input is already formatted");
+        match format_file(&path, &args) {
+            Ok(()) => {
+                info!(?path, "Successfully formatted file");
             }
-        } else {
-            let mut file = File::create(&path)?;
-            file.write_all(formatted.as_bytes())?;
+            Err(error) => {
+                warn!(?path, ?error, "Failed to format file");
+                check_ok = false;
+            }
         }
     }
 
@@ -95,5 +75,37 @@ fn main() -> anyhow::Result<()> {
         anyhow::bail!("Failed check");
     }
 
+    Ok(())
+}
+
+fn format_file(path: &Path, args: &Args) -> anyhow::Result<()> {
+    let mut file = File::options()
+        .read(true)
+        .open(&path)
+        .unwrap_or_else(|e| panic!("Couldn't open file : {e}"));
+    let mut content = String::with_capacity(1024);
+    file.read_to_string(&mut content)?;
+    drop(file);
+
+    let config = if args.config_path.is_file() {
+        let mut config_file = File::open(&args.config_path)?;
+        let mut config_file_content = String::new();
+        config_file.read_to_string(&mut config_file_content)?;
+        toml::from_str(&config_file_content)?
+    } else {
+        typstfmt::Config::default()
+    };
+
+    debug!(?path, "Formatting input");
+
+    let formatted = format(&content, config)?;
+    if args.check {
+        if formatted != content {
+            anyhow::bail!("Output still needs formatting, please report this at https://github.com/jeffa5/typstfmt");
+        }
+    } else {
+        let mut file = File::create(&path)?;
+        file.write_all(formatted.as_bytes())?;
+    }
     Ok(())
 }
