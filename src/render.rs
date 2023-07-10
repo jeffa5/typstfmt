@@ -500,7 +500,7 @@ impl Renderable for Conditional {
         let mut children = Children::new(self.as_untyped());
         let spacing = |children: &Children, renderer: &mut Renderer| {
             if children.peek_prev().map_or(false, |p| {
-                dbg!(p.kind()) == SyntaxKind::Space && dbg!(p.text()).contains("\n")
+                p.kind() == SyntaxKind::Space && p.text().contains("\n")
             }) {
                 renderer.writer.newline_with_indent();
             } else {
