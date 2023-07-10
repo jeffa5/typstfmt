@@ -116,3 +116,10 @@ f(
 ]
 }"##,
 }
+
+test_snippet! {
+    conditional_spacing,
+    ignore = "conditional spacing",
+    expect = r##"#if false {} else if true{} else {}"##,
+    r##"#if false{}else if true{}else{}"##,
+}
