@@ -77,7 +77,7 @@ pub fn format(input: &str, config: Config) -> Result<String, FormatError> {
     renderer2.render(reparsed);
     let output2 = renderer2.finish();
     if output != output2 {
-        debug!(?output, "Formatted text would not pass check");
+        debug!(?output, ?output2, "Formatted text would not pass check");
         return Err(FormatError::FailedToFindFixedPoint);
     }
 
