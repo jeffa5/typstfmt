@@ -7,6 +7,8 @@ pub struct Config {
     pub indent: usize,
     /// Whether to manipulate spacing.
     pub spacing: bool,
+    /// Whether to format items over multiple lines.
+    pub multiline: bool,
 }
 
 impl Default for Config {
@@ -14,6 +16,7 @@ impl Default for Config {
         Config {
             indent: 4,
             spacing: true,
+            multiline: true,
         }
     }
 }
@@ -26,6 +29,7 @@ impl Config {
         Config {
             indent: 0,
             spacing: false,
+            multiline: false,
         }
     }
 }

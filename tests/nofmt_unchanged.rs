@@ -1,6 +1,9 @@
 #[macro_use]
 mod common;
 
+test_snippet_unchanged!(function, "#f (  a  ,  b :   c,  ..d    ) = (a+b)",);
+test_snippet_unchanged!(let_binding, "#let    x       =      3",);
+
 test_snippet_unchanged!(fuzzed_0001, "$\n\0$",);
 test_snippet_unchanged!(fuzzed_0002, "#``",);
 test_snippet_unchanged!(fuzzed_0003, "0.\n",);
@@ -22,3 +25,9 @@ test_snippet_unchanged!(fuzzed_0018, "#(..)",);
 test_snippet_unchanged!(fuzzed_0019, "#()=A",);
 test_snippet_unchanged!(fuzzed_0020, "#(..A)",);
 test_snippet_unchanged!(fuzzed_0021, "#z(..E)",);
+test_snippet_unchanged!(fuzzed_0022, "l/*",);
+test_snippet_unchanged!(fuzzed_0023, "#(: )-",);
+test_snippet_unchanged!(fuzzed_0024, "#(V:p)",);
+test_snippet_unchanged!(fuzzed_0025, "#return{}- u",);
+test_snippet_unchanged!(fuzzed_0026, "$nu(::)$",);
+test_snippet_unchanged!(fuzzed_0027, "$nu(-;:)$",);
