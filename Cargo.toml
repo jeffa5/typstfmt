@@ -9,6 +9,7 @@ exclude = [
     ".envrc",
     ".github",
     ".gitmodules",
+    "fuzz",
     "typst-packages",
 ]
 
