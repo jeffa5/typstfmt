@@ -9,6 +9,7 @@ use tracing::metadata::LevelFilter;
 use tracing::warn;
 use tracing_subscriber::EnvFilter;
 use typstfmt::format;
+use typstfmt::Config;
 use typstfmt::FormatError;
 
 use clap::Parser;
@@ -75,11 +76,20 @@ fn main() -> anyhow::Result<()> {
         glob.into_iter().flat_map(|path| path.ok()).collect()
     };
 
+    let config = if args.config_path.is_file() {
+        let mut config_file = File::open(&args.config_path)?;
+        let mut config_file_content = String::new();
+        config_file.read_to_string(&mut config_file_content)?;
+        toml::from_str(&config_file_content)?
+    } else {
+        typstfmt::Config::default()
+    };
+
     let mut ok = 0;
     let mut erroneous = 0;
     let mut needs_formatting = 0;
     for path in paths.into_iter() {
-        match format_file(&path, &args) {
+        match format_file(&path, &config, &args) {
             Ok(()) => {
                 info!(?path, "Successfully formatted file");
                 ok += 1;
@@ -124,7 +134,7 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn format_file(path: &Path, args: &Args) -> Result<(), Error> {
+fn format_file(path: &Path, config: &Config, args: &Args) -> Result<(), Error> {
     let mut file = File::options()
         .read(true)
         .open(path)
@@ -133,18 +143,10 @@ fn format_file(path: &Path, args: &Args) -> Result<(), Error> {
     file.read_to_string(&mut content)?;
     drop(file);
 
-    let config = if args.config_path.is_file() {
-        let mut config_file = File::open(&args.config_path)?;
-        let mut config_file_content = String::new();
-        config_file.read_to_string(&mut config_file_content)?;
-        toml::from_str(&config_file_content)?
-    } else {
-        typstfmt::Config::default()
-    };
-
     debug!(?path, "Formatting input");
 
-    let formatted = format(&content, config)?;
+    // TODO: remove this clone, format should take a &Config
+    let formatted = format(&content, config.clone())?;
 
     if args.diff {
         let text_diff = similar::TextDiff::from_lines(&content, &formatted);
