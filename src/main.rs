@@ -77,11 +77,13 @@ fn main() -> anyhow::Result<()> {
     };
 
     let config = if args.config_path.is_file() {
+        debug!(config_path=?args.config_path, "Loading config from file");
         let mut config_file = File::open(&args.config_path)?;
         let mut config_file_content = String::new();
         config_file.read_to_string(&mut config_file_content)?;
         toml::from_str(&config_file_content)?
     } else {
+        debug!("Using default config");
         typstfmt::Config::default()
     };
 
