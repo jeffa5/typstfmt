@@ -3728,6 +3728,10 @@ rec {
             features = [ "derive" ];
           }
           {
+            name = "similar";
+            packageId = "similar";
+          }
+          {
             name = "thiserror";
             packageId = "thiserror";
           }

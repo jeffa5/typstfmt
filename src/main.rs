@@ -37,6 +37,10 @@ struct Args {
     /// Run in 'check' mode. Exits with 0 if all input is formatted correctly. Exits with 1 if formatting of any input is required.
     #[arg(long)]
     check: bool,
+
+    /// Print out the diff between the original content and the formatted content.
+    #[arg(long)]
+    diff: bool,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -80,24 +84,22 @@ fn main() -> anyhow::Result<()> {
                 info!(?path, "Successfully formatted file");
                 ok += 1;
             }
-            Err(error) => {
-                match error {
-                    Error::FormatError(_) => {
-                        warn!(?path, %error, "Failed to format file");
-                        erroneous += 1;
-                    }
-                    Error::CheckFailed => {
-                        warn!(?path, "Failed check");
-                        needs_formatting += 1;
-                    }
-                    Error::IOError(_) => {
-                        warn!(?path, %error, "Got an error")
-                    }
-                    Error::TomlError(_) => {
-                        warn!(?path, %error, "Failed to get config")
-                    }
+            Err(error) => match error {
+                Error::FormatError(_) => {
+                    warn!(?path, %error, "Failed to format file");
+                    erroneous += 1;
                 }
-            }
+                Error::CheckFailed => {
+                    warn!(?path, "Failed check");
+                    needs_formatting += 1;
+                }
+                Error::IOError(_) => {
+                    warn!(?path, %error, "Got an error")
+                }
+                Error::TomlError(_) => {
+                    warn!(?path, %error, "Failed to get config")
+                }
+            },
         }
     }
 
@@ -143,6 +145,18 @@ fn format_file(path: &Path, args: &Args) -> Result<(), Error> {
     debug!(?path, "Formatting input");
 
     let formatted = format(&content, config)?;
+
+    if args.diff {
+        let text_diff = similar::TextDiff::from_lines(&content, &formatted);
+        println!(
+            "{}",
+            text_diff.unified_diff().header(
+                path.to_str().unwrap(),
+                &format!("{}.formatted", path.to_str().unwrap())
+            )
+        );
+    }
+
     if args.check {
         if formatted != content {
             return Err(Error::CheckFailed);
