@@ -20,7 +20,7 @@ globmatch = "0.2.3"
 itertools = "0.11.0"
 serde = { version = "1.0.168", features = ["derive"] }
 similar = "2.2.1"
-thiserror = "1.0.43"
+thiserror = "1.0.47"
 toml = "0.7.3"
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
