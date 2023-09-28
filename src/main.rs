@@ -125,20 +125,20 @@ fn main() -> anyhow::Result<()> {
     if args.check {
         if formatted > 0 {
             anyhow::bail!(
-                "Failed check. {} files passed, {} had errors, {} need formatting",
+                "Failed check. {} files passed, {} had errors, {} need formatting.",
                 unchanged,
                 erroneous,
                 formatted
             );
         } else {
             println!(
-                "Passed check. {} files passed, {} had errors",
+                "Passed check. {} files passed, {} had errors.",
                 unchanged, erroneous
             );
         }
     } else {
         println!(
-            "{} files formatted. {} files were already correct. {} files had errors",
+            "{} files formatted. {} files were already correct. {} files had errors.",
             formatted, unchanged, erroneous
         );
     }
