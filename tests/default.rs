@@ -211,3 +211,15 @@ test_snippet! {
   is very long
 "##,
 }
+
+test_snippet! {
+    closure_arg_spacing,
+    expect = r"
+#locate(loc => {
+  })
+",
+    r"
+#locate(loc=>{
+})
+    ",
+}

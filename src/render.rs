@@ -484,6 +484,16 @@ impl Renderable for Closure {
                 typed.render(renderer);
             } else if child.kind() == SyntaxKind::Params {
                 render_params(child, renderer);
+            } else if matches!(child.kind(), SyntaxKind::Arrow | SyntaxKind::Eq) {
+                if renderer.config().spacing {
+                    renderer.writer.space();
+                }
+                renderer.writer.push(child.text());
+                if renderer.config().spacing {
+                    renderer.writer.space();
+                }
+            } else if renderer.config().spacing && child.kind() == SyntaxKind::Space {
+                // skip
             } else if let Some(typed) = child.cast::<Ident>() {
                 typed.render(renderer);
             } else {
