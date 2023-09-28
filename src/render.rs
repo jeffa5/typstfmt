@@ -184,7 +184,13 @@ impl Renderable for Markup {
     fn render_impl(&self, renderer: &mut Renderer) {
         let mut children = Children::new(self.as_untyped());
         while let Some(child) = children.next() {
-            if let Some(expr) = child.cast::<Expr>() {
+            if let Some(parbreak) = child.cast::<Parbreak>() {
+                if children.peek_prev().is_some() && children.peek_next().is_some() {
+                    parbreak.render(renderer);
+                } else {
+                    renderer.writer.newline_with_indent();
+                }
+            } else if let Some(expr) = child.cast::<Expr>() {
                 expr.render(renderer);
             } else {
                 render_anon(child, renderer);
@@ -372,8 +378,13 @@ impl Renderable for Str {}
 
 impl Renderable for ContentBlock {
     fn render_impl(&self, renderer: &mut Renderer) {
-        for child in self.as_untyped().children() {
-            if let Some(markup) = child.cast::<Markup>() {
+        let mut children = Children::new(self.as_untyped());
+        while let Some(child) = children.next() {
+            if child.kind() == SyntaxKind::LeftBracket {
+                renderer.writer.open_grouping(child.text());
+            } else if child.kind() == SyntaxKind::RightBracket {
+                renderer.writer.close_grouping(child.text());
+            } else if let Some(markup) = child.cast::<Markup>() {
                 markup.render(renderer);
             } else {
                 render_anon(child, renderer);

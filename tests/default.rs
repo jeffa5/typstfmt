@@ -223,3 +223,34 @@ test_snippet! {
 })
     ",
 }
+
+test_snippet! {
+    content_newlines,
+    expect = r"
+#[
+  my text here
+
+  my next paragraph
+]
+",
+    r"
+#[
+
+
+
+
+
+  my text here
+
+
+
+
+
+  my next paragraph
+
+
+
+
+]
+",
+}
