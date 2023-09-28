@@ -40,6 +40,7 @@ struct Args {
     check: bool,
 
     /// Print out the diff between the original content and the formatted content.
+    /// Also behaves like 'check' mode for exit codes.
     #[arg(long)]
     diff: bool,
 }
@@ -164,6 +165,12 @@ fn format_file(path: &Path, config: &Config, args: &Args) -> Result<DidFormat, E
     // TODO: remove this clone, format should take a &Config
     let formatted = format(&content, config.clone())?;
 
+    let did_format = if formatted == content {
+        DidFormat::No
+    } else {
+        DidFormat::Yes
+    };
+
     if args.diff {
         let text_diff = similar::TextDiff::from_lines(&content, &formatted);
         println!(
@@ -173,13 +180,13 @@ fn format_file(path: &Path, config: &Config, args: &Args) -> Result<DidFormat, E
                 &format!("{}.formatted", path.to_str().unwrap())
             )
         );
+        if matches!(did_format, DidFormat::Yes) {
+            return Err(Error::CheckFailed);
+        } else {
+            return Ok(did_format);
+        }
     }
 
-    let did_format = if formatted == content {
-        DidFormat::No
-    } else {
-        DidFormat::Yes
-    };
     if args.check {
         if matches!(did_format, DidFormat::Yes) {
             return Err(Error::CheckFailed);
