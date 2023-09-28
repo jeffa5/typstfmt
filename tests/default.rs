@@ -175,3 +175,39 @@ test_snippet! {
     expect = r##"#((d: 2))"##,
     r##"#((d: 2 ,))"##,
 }
+
+test_snippet! {
+    enumerate_indent,
+    expect = r##"
++ some other text that
+  is very long
+"##,
+    r##"
++ some other text that
+  is very long
+"##,
+}
+
+test_snippet! {
+    list_indent,
+    expect = r##"
+- some other text that
+  is very long
+"##,
+    r##"
+- some other text that
+  is very long
+"##,
+}
+
+test_snippet! {
+    termlist_indent,
+    expect = r##"
+/ thing: some other text that
+  is very long
+"##,
+    r##"
+/ thing: some other text that
+  is very long
+"##,
+}

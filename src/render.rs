@@ -266,17 +266,64 @@ impl Renderable for Heading {
 }
 impl Renderable for ListItem {
     fn render_impl(&self, renderer: &mut Renderer) {
-        render_children_typed_or_text::<Markup>(self, renderer)
+        let mut children = Children::new(self.as_untyped());
+        while let Some(child) = children.next() {
+            if child.kind() == SyntaxKind::ListMarker {
+                render_anon(child, renderer);
+                if renderer.config().spacing {
+                    renderer.writer.space();
+                }
+                renderer.writer.inc_indent();
+            } else if renderer.config().spacing && child.kind() == SyntaxKind::Space {
+                // skip
+            } else {
+                render_anon(child, renderer);
+            }
+        }
+        renderer.writer.dec_indent();
     }
 }
 impl Renderable for EnumItem {
     fn render_impl(&self, renderer: &mut Renderer) {
-        render_children_typed_or_text::<Markup>(self, renderer)
+        let mut children = Children::new(self.as_untyped());
+        while let Some(child) = children.next() {
+            if child.kind() == SyntaxKind::EnumMarker {
+                render_anon(child, renderer);
+                if renderer.config().spacing {
+                    renderer.writer.space();
+                }
+                renderer.writer.inc_indent();
+            } else if renderer.config().spacing && child.kind() == SyntaxKind::Space {
+                // skip
+            } else {
+                render_anon(child, renderer);
+            }
+        }
+        renderer.writer.dec_indent();
     }
 }
 impl Renderable for TermItem {
     fn render_impl(&self, renderer: &mut Renderer) {
-        render_children_typed_or_text::<Markup>(self, renderer)
+        let mut children = Children::new(self.as_untyped());
+        while let Some(child) = children.next() {
+            if child.kind() == SyntaxKind::TermMarker {
+                render_anon(child, renderer);
+                if renderer.config().spacing {
+                    renderer.writer.space();
+                }
+                renderer.writer.inc_indent();
+            } else if child.kind() == SyntaxKind::Colon {
+                renderer.writer.push(":");
+                if renderer.config().spacing {
+                    renderer.writer.space();
+                }
+            } else if renderer.config().spacing && child.kind() == SyntaxKind::Space {
+                // skip
+            } else {
+                render_anon(child, renderer);
+            }
+        }
+        renderer.writer.dec_indent();
     }
 }
 
