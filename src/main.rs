@@ -173,17 +173,18 @@ fn format_file(path: &Path, config: &Config, args: &Args) -> Result<DidFormat, E
         );
     }
 
-    if args.check {
-        if formatted != content {
-            return Err(Error::CheckFailed);
-        }
-    } else {
-        let mut file = File::create(path)?;
-        file.write_all(formatted.as_bytes())?;
-    }
-    Ok(if formatted == content {
+    let did_format = if formatted == content {
         DidFormat::No
     } else {
         DidFormat::Yes
-    })
+    };
+    if args.check {
+        if matches!(did_format, DidFormat::Yes) {
+            return Err(Error::CheckFailed);
+        }
+    } else if matches!(did_format, DidFormat::Yes) {
+        let mut file = File::create(path)?;
+        file.write_all(formatted.as_bytes())?;
+    }
+    Ok(did_format)
 }
