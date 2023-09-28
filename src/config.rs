@@ -14,7 +14,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            indent: 4,
+            indent: 2,
             spacing: true,
             multiline: true,
         }
