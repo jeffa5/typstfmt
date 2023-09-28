@@ -9,12 +9,19 @@ test_snippet!(
 
 test_snippet!(
     codeblock_single,
-    expect = "#{\n    a()[]\n}",
+    expect = r"
+#{
+  a()[]
+}",
     "#{\na()[]\n}",
 );
 test_snippet!(
     codeblock_multi,
-    expect = "#{\n    a()[]\n    b()[]\n}",
+    expect = r"
+#{
+  a()[]
+  b()[]
+}",
     "#{\na()[]\nb()[]\n}",
 );
 
@@ -40,7 +47,8 @@ test_snippet!(function_content_args, expect = "#k[][]", "#k[][]",);
 
 test_snippet!(
     function_multi_line,
-    expect = "#let f(\n    /// test comment\n    a,\n    /// another comment\n    b,\n    c,\n) = {a + (b - c)}",
+    expect =
+        "#let f(\n  /// test comment\n  a,\n  /// another comment\n  b,\n  c,\n) = {a + (b - c)}",
     "#let f(/// test comment\na,\n/// another comment\nb,c) = {a+(b - c)}",
 );
 
@@ -54,31 +62,41 @@ test_snippet!(
 
 test_snippet!(
     content_block_indent,
-    expect = "#[\n    *strong*\n    normal\n    _emph_\n\n    new para\n]",
+    expect = "#[\n  *strong*\n  normal\n  _emph_\n\n  new para\n]",
     "#[\n*strong*\nnormal\n_emph_\n\nnew para\n]",
 );
 
 test_snippet!(
     arg_indent,
-    expect = "#let f(\n    a,\n    b,\n) = a + b",
+    expect = r"
+#let f(
+  a,
+  b,
+) = a + b",
     "#let f(\na,\nb,\n) = a + b",
 );
 
 test_snippet!(
     code_block_indent,
-    expect = "#{\n    1\n    2\n    3\n}",
+    expect = r"
+#{
+  1
+  2
+  3
+}",
     "#{\n1\n2\n3\n}",
 );
 
 test_snippet!(
     complex,
-    expect = r#"#import "template.typ": *
+    expect = r#"
+#import "template.typ": *
 #show: letter.with(
-    sender: [Jane Smith, Universal Exports, 1 Heavy Plaza, Morristown, NJ 07964,],
-    recipient: [Mr. John Doe \ Acme Corp. \ 123 Glennwood Ave \ Quarto Creek, VA 22438],
-    date: [Morristown, June 9th, 2023,],
-    subject: [test],
-    name: [Jane Smith \Regional Director],
+  sender: [Jane Smith, Universal Exports, 1 Heavy Plaza, Morristown, NJ 07964,],
+  recipient: [Mr. John Doe \ Acme Corp. \ 123 Glennwood Ave \ Quarto Creek, VA 22438],
+  date: [Morristown, June 9th, 2023,],
+  subject: [test],
+  name: [Jane Smith \Regional Director],
 )
 
 Dear Joe,
@@ -100,12 +118,12 @@ Best,"#,
 test_snippet! {
     function_content_arg_multiline,
     expect = r##"#{
-    f(
-    )[
-        /* starts
-         * the body
-         */
-    ]
+  f(
+  )[
+    /* starts
+     * the body
+     */
+  ]
 }"##,
     r##"#{
 f(
@@ -131,10 +149,11 @@ test_snippet! {
 
 test_snippet! {
     conditional_newlines,
-    expect = r##"#{
-    if false {}
-    else if true {}
-    else {}
+    expect = r##"
+#{
+  if false {}
+  else if true {}
+  else {}
 }"##,
     r##"#{
     if false {}

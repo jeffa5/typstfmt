@@ -126,7 +126,7 @@ mod tests {
         writer.inc_indent();
         writer.newline_with_indent();
         writer.push("Hello, World!");
-        similar_asserts::assert_eq!(writer.finish(), "\n    Hello, World!");
+        similar_asserts::assert_eq!(writer.finish(), "\n  Hello, World!");
     }
 
     #[test]

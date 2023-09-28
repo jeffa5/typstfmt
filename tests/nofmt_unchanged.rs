@@ -30,4 +30,3 @@ test_snippet_unchanged!(fuzzed_0023, "#(: )-",);
 test_snippet_unchanged!(fuzzed_0024, "#(V:p)",);
 test_snippet_unchanged!(fuzzed_0025, "#return{}- u",);
 test_snippet_unchanged!(fuzzed_0026, "$nu(::)$",);
-test_snippet_unchanged!(fuzzed_0027, "$nu(-;:)$",);

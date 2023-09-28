@@ -10,10 +10,12 @@ macro_rules! test_snippet {
         $(#[ignore = $ignore])?
         fn $test_name() {
             let _ = tracing_subscriber::fmt().with_test_writer().with_max_level(tracing::Level::DEBUG).try_init();
-            let formatted = typstfmt::format($snippet, typstfmt::Config::default()).unwrap();
-            similar_asserts::assert_eq!(formatted, $expected, "first format");
+            let snippet = $snippet.trim_start();
+            let expected = $expected.trim_start();
+            let formatted = typstfmt::format(snippet, typstfmt::Config::default()).unwrap();
+            similar_asserts::assert_eq!(formatted, expected, "first format");
             let reformatted = typstfmt::format(&formatted, typstfmt::Config::default()).unwrap();
-            similar_asserts::assert_eq!(reformatted, $expected, "second format");
+            similar_asserts::assert_eq!(reformatted, expected, "second format");
         }
     };
 }
