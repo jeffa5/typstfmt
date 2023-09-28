@@ -33,6 +33,10 @@
             default = workspacePackages.typstfmt;
           };
 
+        overlays.default = final: prev: {
+          typstfmt = self.packages.${system}.typstfmt;
+        };
+
         formatter = pkgs.alejandra;
 
         devShell = pkgs.mkShell {
