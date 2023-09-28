@@ -14,38 +14,40 @@
     rust-overlay,
     flake-utils,
     crate2nix,
-  }:
-    flake-utils.lib.eachDefaultSystem
-    (
-      system: let
-        pkgs = import nixpkgs {
-          overlays = [rust-overlay.overlays.default];
-          inherit system;
-        };
-        lib = pkgs.lib;
-        rust = pkgs.rust-bin.nightly.latest.default;
-        cargoNix = import ./Cargo.nix {inherit pkgs;};
-        workspacePackages = lib.attrsets.mapAttrs (name: value: value.build) cargoNix.workspaceMembers;
-      in {
-        packages =
-          workspacePackages
-          // {
-            default = workspacePackages.typstfmt;
-          };
+  }: let
+    system = "x86_64-linux";
 
-        formatter = pkgs.alejandra;
+    pkgs = import nixpkgs {
+      overlays = [rust-overlay.overlays.default];
+      inherit system;
+    };
+    lib = pkgs.lib;
+    rust = pkgs.rust-bin.nightly.latest.default;
+    cargoNix = import ./Cargo.nix {inherit pkgs;};
+    workspacePackages = lib.attrsets.mapAttrs (name: value: value.build) cargoNix.workspaceMembers;
+  in {
+    packages.${system} =
+      workspacePackages
+      // {
+        default = workspacePackages.typstfmt;
+      };
 
-        devShell = pkgs.mkShell {
-          buildInputs = with pkgs;
-            [
-              (rust.override {extensions = ["rust-src"];})
-              cargo-watch
-              cargo-fuzz
-            ]
-            ++ [
-              crate2nix.packages.${system}.crate2nix
-            ];
-        };
-      }
-    );
+    overlays.default = final: prev: {
+      typstfmt = self.packages.${prev.system}.typstfmt;
+    };
+
+    formatter.${system} = pkgs.alejandra;
+
+    devShells.${system}.default = pkgs.mkShell {
+      buildInputs = with pkgs;
+        [
+          (rust.override {extensions = ["rust-src"];})
+          cargo-watch
+          cargo-fuzz
+        ]
+        ++ [
+          crate2nix.packages.${system}.crate2nix
+        ];
+    };
+  };
 }
