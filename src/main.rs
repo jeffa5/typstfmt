@@ -87,22 +87,21 @@ fn main() -> anyhow::Result<()> {
         typstfmt::Config::default()
     };
 
-    let mut ok = 0;
+    let mut formatted = 0;
+    let mut unchanged = 0;
     let mut erroneous = 0;
-    let mut needs_formatting = 0;
     for path in paths.into_iter() {
         match format_file(&path, &config, &args) {
-            Ok(did_format) => {
-                match did_format {
-                    DidFormat::Yes => {
-                        info!(?path, "Successfully formatted file");
-                    }
-                    DidFormat::No => {
-                        info!(?path, "Already correctly formatted");
-                    }
+            Ok(did_format) => match did_format {
+                DidFormat::Yes => {
+                    info!(?path, "Successfully formatted file");
+                    formatted += 1;
                 }
-                ok += 1;
-            }
+                DidFormat::No => {
+                    info!(?path, "Already correctly formatted");
+                    unchanged += 1;
+                }
+            },
             Err(error) => match error {
                 Error::FormatError(_) => {
                     warn!(?path, %error, "Failed to format file");
@@ -110,7 +109,7 @@ fn main() -> anyhow::Result<()> {
                 }
                 Error::CheckFailed => {
                     warn!(?path, "Failed check");
-                    needs_formatting += 1;
+                    formatted += 1;
                 }
                 Error::IOError(_) => {
                     warn!(?path, %error, "Got an error")
@@ -123,21 +122,24 @@ fn main() -> anyhow::Result<()> {
     }
 
     if args.check {
-        if needs_formatting > 0 {
+        if formatted > 0 {
             anyhow::bail!(
                 "Failed check. {} files passed, {} had errors, {} need formatting",
-                ok,
+                unchanged,
                 erroneous,
-                needs_formatting
+                formatted
             );
         } else {
             println!(
                 "Passed check. {} files passed, {} had errors",
-                ok, erroneous
+                unchanged, erroneous
             );
         }
     } else {
-        println!("Formatted {} files. {} files had errors", ok, erroneous);
+        println!(
+            "{} files formatted. {} files were already correct. {} files had errors",
+            formatted, unchanged, erroneous
+        );
     }
 
     Ok(())
