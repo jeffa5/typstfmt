@@ -15,7 +15,7 @@ exclude = [
 
 [dependencies]
 anyhow = "1.0.71"
-clap = { version = "4.2.0", features = ["derive"] }
+clap = { version = "4.4.5", features = ["derive"] }
 globmatch = "0.2.3"
 itertools = "0.11.0"
 serde = { version = "1.0.168", features = ["derive"] }
