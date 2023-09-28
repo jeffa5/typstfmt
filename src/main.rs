@@ -92,8 +92,15 @@ fn main() -> anyhow::Result<()> {
     let mut needs_formatting = 0;
     for path in paths.into_iter() {
         match format_file(&path, &config, &args) {
-            Ok(()) => {
-                info!(?path, "Successfully formatted file");
+            Ok(did_format) => {
+                match did_format {
+                    DidFormat::Yes => {
+                        info!(?path, "Successfully formatted file");
+                    }
+                    DidFormat::No => {
+                        info!(?path, "Already correctly formatted");
+                    }
+                }
                 ok += 1;
             }
             Err(error) => match error {
@@ -136,7 +143,12 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn format_file(path: &Path, config: &Config, args: &Args) -> Result<(), Error> {
+enum DidFormat {
+    Yes,
+    No,
+}
+
+fn format_file(path: &Path, config: &Config, args: &Args) -> Result<DidFormat, Error> {
     let mut file = File::options()
         .read(true)
         .open(path)
@@ -169,5 +181,9 @@ fn format_file(path: &Path, config: &Config, args: &Args) -> Result<(), Error> {
         let mut file = File::create(path)?;
         file.write_all(formatted.as_bytes())?;
     }
-    Ok(())
+    Ok(if formatted == content {
+        DidFormat::No
+    } else {
+        DidFormat::Yes
+    })
 }
