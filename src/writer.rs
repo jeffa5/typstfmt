@@ -41,7 +41,7 @@ impl Writer {
     }
 
     pub fn parbreak(&mut self) -> &mut Self {
-        if !self.value.ends_with("\n") {
+        if !self.value.ends_with('\n') {
             self.newline();
         }
         self.newline().indent();

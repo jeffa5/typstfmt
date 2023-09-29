@@ -18,13 +18,13 @@ use clap::Parser;
 #[derive(Debug, thiserror::Error)]
 enum Error {
     #[error("format error: {0}")]
-    FormatError(#[from] FormatError),
+    Format(#[from] FormatError),
     #[error("check failed")]
     CheckFailed,
     #[error("io error: {0}")]
-    IOError(#[from] std::io::Error),
+    IO(#[from] std::io::Error),
     #[error("toml config error: {0}")]
-    TomlError(#[from] toml::de::Error),
+    Toml(#[from] toml::de::Error),
 }
 
 #[derive(Parser, Debug)]
@@ -107,7 +107,7 @@ fn main() -> anyhow::Result<()> {
                 }
             },
             Err(error) => match error {
-                Error::FormatError(_) => {
+                Error::Format(_) => {
                     warn!(?path, %error, "Failed to format file");
                     erroneous += 1;
                 }
@@ -115,10 +115,10 @@ fn main() -> anyhow::Result<()> {
                     warn!(?path, "Failed check");
                     formatted += 1;
                 }
-                Error::IOError(_) => {
+                Error::IO(_) => {
                     warn!(?path, %error, "Got an error")
                 }
-                Error::TomlError(_) => {
+                Error::Toml(_) => {
                     warn!(?path, %error, "Failed to get config")
                 }
             },

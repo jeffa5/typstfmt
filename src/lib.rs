@@ -58,7 +58,7 @@ pub fn format(input: &str, config: Config) -> Result<String, FormatError> {
         return Err(FormatError::ErroneousInput);
     }
     debug!("parsed: {init:?}");
-    let writer = Writer::new(config);
+    let writer = Writer::new(config.clone());
 
     let mut renderer = Renderer { writer };
     renderer.render(init);

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Configuration options for the formatting.
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Config {
     /// The number of spaces to indent by.
     pub indent: usize,

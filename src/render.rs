@@ -194,7 +194,7 @@ impl<'a> Children<'a> {
 impl<'a> Renderable<'a> for Markup<'a> {
     fn render_impl(&self, renderer: &mut Renderer) {
         let mut children = Children::new(self.to_untyped());
-        while let Some(_) = children.next() {
+        while children.next().is_some() {
             let child = children.current().unwrap();
             if let Some(parbreak) = child.cast::<Parbreak>() {
                 if children.peek_prev().is_some() && children.peek_next().is_some() {
@@ -612,7 +612,7 @@ impl<'a> Renderable<'a> for Conditional<'a> {
                 renderer.writer.push(" ");
             }
         };
-        while let Some(_) = children.next() {
+        while children.next().is_some() {
             // Get around the borrow checker
             let child = children.current().unwrap();
             if let Some(expr) = child.cast::<Expr>() {
