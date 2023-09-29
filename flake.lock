@@ -5,11 +5,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1685700212,
-        "narHash": "sha256-rEuQajp1aBkH163tWmL/Coj8GFyE8rh3hea3K+v5w6g=",
+        "lastModified": 1695973508,
+        "narHash": "sha256-qfSKp8s3hRMp/W3jKOjDOEZkhnulAL8/Oxa5v+CcZx8=",
         "owner": "jeffa5",
         "repo": "crate2nix",
-        "rev": "a760ff9c9130bef8bbceb3463fa6adfff8a7da3b",
+        "rev": "4657d316dc9b6b2a6f89cdb8c7797eb0a2b275d2",
         "type": "github"
       },
       "original": {

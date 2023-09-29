@@ -1,5 +1,5 @@
 {
-  "svg2pdf 0.5.0 (git+https://github.com/typst/svg2pdf#39daf9fc2ee84b62b0e3b174ff8c9017f655af6b)": "0qdfn3s0rhr4fjalh26ra0k3vs6c1y6zw3327nsb09r762y2j568",
-  "typst 0.6.0 (git+https://github.com/typst/typst.git?rev=v0.6.0#2dfd44fedd99ab9414c17f358179e1c37e953f30)": "143pzsdwmzlsq50xyqijfbdg5gl7qd3vhf17q86hb06aywsq3vpi",
-  "typst-macros 0.6.0 (git+https://github.com/typst/typst.git?rev=v0.6.0#2dfd44fedd99ab9414c17f358179e1c37e953f30)": "143pzsdwmzlsq50xyqijfbdg5gl7qd3vhf17q86hb06aywsq3vpi"
+  "typst 0.7.0 (git+https://github.com/typst/typst.git?rev=v0.7.0#da8367e189b02918a8fe1a98fd3059fd11a82cd9)": "0f21zm37a0pswnn2jny39njr08s00xyyx3qhka0fla20a6d4xfya",
+  "typst-macros 0.7.0 (git+https://github.com/typst/typst.git?rev=v0.7.0#da8367e189b02918a8fe1a98fd3059fd11a82cd9)": "0f21zm37a0pswnn2jny39njr08s00xyyx3qhka0fla20a6d4xfya",
+  "typst-syntax 0.7.0 (git+https://github.com/typst/typst.git?rev=v0.7.0#da8367e189b02918a8fe1a98fd3059fd11a82cd9)": "0f21zm37a0pswnn2jny39njr08s00xyyx3qhka0fla20a6d4xfya"
 }

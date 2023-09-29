@@ -24,7 +24,7 @@ thiserror = "1.0.43"
 toml = "0.7.3"
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
-typst = { git = "https://github.com/typst/typst.git", rev = "v0.6.0" }
+typst = { git = "https://github.com/typst/typst.git", rev = "v0.7.0" }
 
 
 [dev-dependencies]

@@ -367,6 +367,11 @@ impl Renderable for MathRoot {
         render_children_typed_or_text::<Expr>(self, renderer)
     }
 }
+impl Renderable for MathPrimes {
+    fn render_impl(&self, renderer: &mut Renderer) {
+        render_children_typed_or_text::<Expr>(self, renderer)
+    }
+}
 impl Renderable for Ident {}
 impl Renderable for None {}
 impl Renderable for Auto {}
@@ -760,6 +765,7 @@ impl Renderable for Expr {
             Expr::MathAttach(node) => node.render(renderer),
             Expr::MathFrac(node) => node.render(renderer),
             Expr::MathRoot(node) => node.render(renderer),
+            Expr::MathPrimes(node) => node.render(renderer),
             Expr::Ident(node) => node.render(renderer),
             Expr::None(node) => node.render(renderer),
             Expr::Auto(node) => node.render(renderer),
