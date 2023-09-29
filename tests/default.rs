@@ -264,3 +264,17 @@ test_snippet! {
 #let f(/*inline comment*/a) = {}
 ",
 }
+
+test_snippet! {
+    comment_newlines_following,
+    expect = r"
+// test comment
+
+#let a = 2
+",
+    r"
+// test comment
+
+#let a = 2
+",
+}
