@@ -254,3 +254,13 @@ test_snippet! {
 ]
 ",
 }
+
+test_snippet! {
+    inline_comment_single_line,
+    expect = r"
+#let f(/*inline comment*/a) = {}
+",
+    r"
+#let f(/*inline comment*/a) = {}
+",
+}

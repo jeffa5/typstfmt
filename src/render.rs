@@ -60,7 +60,7 @@ fn render_anon(node: &SyntaxNode, renderer: &mut Renderer) {
                 renderer.writer.push(line).newline_with_indent();
             }
         } else {
-            renderer.writer.push(node.text()).newline_with_indent();
+            renderer.writer.push(node.text());
         }
     } else {
         renderer.writer.push(node.text());
