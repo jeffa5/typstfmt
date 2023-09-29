@@ -278,3 +278,22 @@ test_snippet! {
 #let a = 2
 ",
 }
+
+test_snippet! {
+    code_blank_lines,
+    expect = r"
+#{
+  let a = 1
+
+  let b = 2
+}
+",
+    r"
+#{
+  let a = 1
+
+
+  let b = 2
+}
+",
+}

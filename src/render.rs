@@ -235,7 +235,9 @@ impl<'a> Renderable<'a> for Space<'a> {
     fn render_impl(&self, renderer: &mut Renderer) {
         if renderer.config().spacing {
             let text = self.to_untyped().text();
-            if text.contains('\n') {
+            if text.contains("\n\n") {
+                renderer.writer.parbreak();
+            } else if text.contains('\n') {
                 // convert newlines to newlines with indent
                 renderer.writer.newline_with_indent();
             } else {
