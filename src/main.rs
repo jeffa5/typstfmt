@@ -3,6 +3,7 @@ use std::io::Read;
 use std::io::Write;
 use std::path::Path;
 use std::path::PathBuf;
+use std::time::Instant;
 use tracing::debug;
 use tracing::info;
 use tracing::metadata::LevelFilter;
@@ -88,6 +89,8 @@ fn main() -> anyhow::Result<()> {
         typstfmt::Config::default()
     };
 
+    let start = Instant::now();
+
     let mut formatted = 0;
     let mut unchanged = 0;
     let mut erroneous = 0;
@@ -122,6 +125,8 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
+    let elapsed = start.elapsed();
+
     if args.check {
         if formatted > 0 {
             anyhow::bail!(
@@ -132,14 +137,14 @@ fn main() -> anyhow::Result<()> {
             );
         } else {
             println!(
-                "Passed check. {} files passed, {} had errors.",
-                unchanged, erroneous
+                "Passed check. {} files passed, {} had errors, {:?}.",
+                unchanged, erroneous, elapsed
             );
         }
     } else {
         println!(
-            "{} files formatted. {} files were already correct. {} files had errors.",
-            formatted, unchanged, erroneous
+            "{} files formatted. {} files were already correct. {} files had errors, {:?}.",
+            formatted, unchanged, erroneous, elapsed
         );
     }
 
