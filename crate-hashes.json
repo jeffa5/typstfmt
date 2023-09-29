@@ -1,5 +1,5 @@
 {
-  "typst 0.7.0 (git+https://github.com/typst/typst.git?rev=v0.7.0#da8367e189b02918a8fe1a98fd3059fd11a82cd9)": "0f21zm37a0pswnn2jny39njr08s00xyyx3qhka0fla20a6d4xfya",
-  "typst-macros 0.7.0 (git+https://github.com/typst/typst.git?rev=v0.7.0#da8367e189b02918a8fe1a98fd3059fd11a82cd9)": "0f21zm37a0pswnn2jny39njr08s00xyyx3qhka0fla20a6d4xfya",
-  "typst-syntax 0.7.0 (git+https://github.com/typst/typst.git?rev=v0.7.0#da8367e189b02918a8fe1a98fd3059fd11a82cd9)": "0f21zm37a0pswnn2jny39njr08s00xyyx3qhka0fla20a6d4xfya"
+  "typst 0.8.0 (git+https://github.com/typst/typst.git?rev=c203eff9f469f263c689f71ac79e3e4c9467e55b#c203eff9f469f263c689f71ac79e3e4c9467e55b)": "0sjpgxnbdq3g6s6banz031myf0g5w5jwprfhk7ab2aqwqjkxk42z",
+  "typst-macros 0.8.0 (git+https://github.com/typst/typst.git?rev=c203eff9f469f263c689f71ac79e3e4c9467e55b#c203eff9f469f263c689f71ac79e3e4c9467e55b)": "0sjpgxnbdq3g6s6banz031myf0g5w5jwprfhk7ab2aqwqjkxk42z",
+  "typst-syntax 0.8.0 (git+https://github.com/typst/typst.git?rev=c203eff9f469f263c689f71ac79e3e4c9467e55b#c203eff9f469f263c689f71ac79e3e4c9467e55b)": "0sjpgxnbdq3g6s6banz031myf0g5w5jwprfhk7ab2aqwqjkxk42z"
 }
