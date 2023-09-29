@@ -50,7 +50,11 @@ pub fn format(input: &str, config: Config) -> Result<String, FormatError> {
     let init = parse(input);
     // don't try to format things that aren't valid
     if erroneous(&init) {
-        debug!("Not formatting erroneous input");
+        debug!(?init, "Not formatting erroneous input");
+        let errors = init.errors();
+        for error in errors {
+            debug!(?error, "error");
+        }
         return Err(FormatError::ErroneousInput);
     }
     debug!("parsed: {init:?}");
