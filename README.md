@@ -7,14 +7,26 @@ It aims to make the code consistent.
 
 ## Install
 
+### Cargo
+
 ```sh
 cargo install --git https://github.com/jeffa5/typstfmt
 ```
+
+### Nix
+
+The flake provides an overlay which you can use with nixpkgs.
 
 ## Run
 
 ```sh
 typstfmt
+```
+
+### Nix
+
+```sh
+nix run github:jeffa5/typstfmt
 ```
 
 ## Configuration
