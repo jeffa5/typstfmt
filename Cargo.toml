@@ -24,8 +24,7 @@ thiserror = "1.0.43"
 toml = "0.7.3"
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter"] }
-# use a commit just past the typst tagged v0.8.0: https://github.com/typst/typst/issues/2260
-typst = { git = "https://github.com/typst/typst.git", rev = "c203eff9f469f263c689f71ac79e3e4c9467e55b" }
+typst = { git = "https://github.com/typst/typst.git", rev = "v0.9.0" }
 
 [dev-dependencies]
 env_logger = "0.10.0"
