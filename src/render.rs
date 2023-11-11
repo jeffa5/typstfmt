@@ -186,6 +186,18 @@ impl<'a> Children<'a> {
         self.items.get(self.index)
     }
 
+    fn peek_next_non_space(&self) -> Option<&&SyntaxNode> {
+        let mut i = self.index;
+        while let Some(n) = self.items.get(i) {
+            if n.kind() == SyntaxKind::Space {
+                i += 1
+            } else {
+                return Some(n);
+            }
+        }
+        None
+    }
+
     fn peek_prev(&self) -> Option<&&SyntaxNode> {
         self.index.checked_sub(2).and_then(|i| self.items.get(i))
     }
@@ -475,15 +487,23 @@ impl<'a> Renderable<'a> for Unary<'a> {
 }
 impl<'a> Renderable<'a> for Binary<'a> {
     fn render_impl(&self, renderer: &mut Renderer) {
-        for child in self.to_untyped().children() {
+        let mut children = Children::new(self.to_untyped());
+        while let Some(child) = children.next().map(|c| *c).cloned() {
             if let Some(expr) = child.cast::<Expr>() {
                 expr.render(renderer);
             } else if renderer.config().spacing && BinOp::from_kind(child.kind()).is_some() {
                 renderer.writer.push(" ").push(child.text()).push(" ");
+            } else if renderer.config().spacing
+                && (child.kind() == SyntaxKind::Not
+                    && children
+                        .peek_next_non_space()
+                        .map_or(false, |n| dbg!(n).kind() == SyntaxKind::In))
+            {
+                renderer.writer.push(" ").push(child.text());
             } else if renderer.config().spacing && child.kind() == SyntaxKind::Space {
                 // skip
             } else {
-                render_anon(child, renderer)
+                render_anon(&child, renderer)
             }
         }
     }
