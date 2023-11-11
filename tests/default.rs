@@ -297,3 +297,13 @@ test_snippet! {
 }
 ",
 }
+
+test_snippet! {
+    not_in,
+    expect = r#"#if "a" not in ("b",) [
+  abc
+]"#,
+    r#"#if "a" not in ("b",) [
+  abc
+]"#,
+}
