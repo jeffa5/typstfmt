@@ -18,7 +18,7 @@ anyhow = "1.0.71"
 clap = { version = "4.2.0", features = ["derive"] }
 globmatch = "0.2.3"
 itertools = "0.11.0"
-serde = { version = "1.0.168", features = ["derive"] }
+serde = { version = "1.0.192", features = ["derive"] }
 similar = "2.2.1"
 thiserror = "1.0.43"
 toml = "0.7.3"
