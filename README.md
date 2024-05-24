@@ -20,7 +20,10 @@ The flake provides an overlay which you can use with nixpkgs.
 ## Run
 
 ```sh
+# format stdin
 typstfmt
+# format typst files in current directory
+typstfmt *.typ
 ```
 
 ### Nix
