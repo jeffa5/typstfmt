@@ -1,4 +1,5 @@
 use std::fs::File;
+use std::io::stdin;
 use std::io::Read;
 use std::io::Write;
 use std::path::Path;
@@ -30,7 +31,7 @@ enum Error {
 #[derive(Parser, Debug)]
 #[command(version = "0.1.0", about = "Format typst code")]
 struct Args {
-    /// A file or directory to format. If not specified, all .typ files in the current directory will be formatted.
+    /// A file or directory to format. If not specified, stdin is read for input.
     files: Vec<PathBuf>,
 
     #[arg(long, default_value = "typstfmt.toml")]
@@ -74,8 +75,7 @@ fn main() -> anyhow::Result<()> {
             })
             .collect()
     } else {
-        let glob = globmatch::Builder::new("**/*.typ").build(".").unwrap();
-        glob.into_iter().flat_map(|path| path.ok()).collect()
+        Vec::new()
     };
 
     let config = if args.config_path.is_file() {
@@ -94,34 +94,67 @@ fn main() -> anyhow::Result<()> {
     let mut formatted = 0;
     let mut unchanged = 0;
     let mut erroneous = 0;
-    for path in paths.into_iter() {
-        match format_file(&path, &config, &args) {
+    if paths.is_empty() {
+        // read from stdin
+        let input = std::io::read_to_string(stdin())?;
+        match format_stdin(&input, &config, &args) {
             Ok(did_format) => match did_format {
                 DidFormat::Yes => {
-                    info!(?path, "Successfully formatted file");
+                    info!("Successfully formatted stdin");
                     formatted += 1;
                 }
                 DidFormat::No => {
-                    info!(?path, "Already correctly formatted");
+                    info!("Already correctly formatted");
                     unchanged += 1;
                 }
             },
             Err(error) => match error {
                 Error::Format(_) => {
-                    warn!(?path, %error, "Failed to format file");
+                    warn!(%error, "Failed to format stdin");
                     erroneous += 1;
                 }
                 Error::CheckFailed => {
-                    warn!(?path, "Failed check");
+                    warn!("Failed check");
                     formatted += 1;
                 }
                 Error::IO(_) => {
-                    warn!(?path, %error, "Got an error")
+                    warn!(%error, "Got an error")
                 }
                 Error::Toml(_) => {
-                    warn!(?path, %error, "Failed to get config")
+                    warn!(%error, "Failed to get config")
                 }
             },
+        }
+    } else {
+        for path in paths.into_iter() {
+            match format_file(&path, &config, &args) {
+                Ok(did_format) => match did_format {
+                    DidFormat::Yes => {
+                        info!(?path, "Successfully formatted file");
+                        formatted += 1;
+                    }
+                    DidFormat::No => {
+                        info!(?path, "Already correctly formatted");
+                        unchanged += 1;
+                    }
+                },
+                Err(error) => match error {
+                    Error::Format(_) => {
+                        warn!(?path, %error, "Failed to format file");
+                        erroneous += 1;
+                    }
+                    Error::CheckFailed => {
+                        warn!(?path, "Failed check");
+                        formatted += 1;
+                    }
+                    Error::IO(_) => {
+                        warn!(?path, %error, "Got an error")
+                    }
+                    Error::Toml(_) => {
+                        warn!(?path, %error, "Failed to get config")
+                    }
+                },
+            }
         }
     }
 
@@ -199,6 +232,45 @@ fn format_file(path: &Path, config: &Config, args: &Args) -> Result<DidFormat, E
     } else if matches!(did_format, DidFormat::Yes) {
         let mut file = File::create(path)?;
         file.write_all(formatted.as_bytes())?;
+    }
+    Ok(did_format)
+}
+
+
+fn format_stdin( content: &str, config: &Config, args: &Args) -> Result<DidFormat, Error> {
+    debug!("Formatting stdin");
+
+    // TODO: remove this clone, format should take a &Config
+    let formatted = format(content, config.clone())?;
+
+    let did_format = if formatted == content {
+        DidFormat::No
+    } else {
+        DidFormat::Yes
+    };
+
+    if args.diff {
+        let text_diff = similar::TextDiff::from_lines(content, &formatted);
+        println!(
+            "{}",
+            text_diff.unified_diff().header(
+                "stdin",
+                &format!("{}.formatted", "stdin")
+            )
+        );
+        if matches!(did_format, DidFormat::Yes) {
+            return Err(Error::CheckFailed);
+        } else {
+            return Ok(did_format);
+        }
+    }
+
+    if args.check {
+        if matches!(did_format, DidFormat::Yes) {
+            return Err(Error::CheckFailed);
+        }
+    } else if matches!(did_format, DidFormat::Yes) {
+        println!("{}", formatted);
     }
     Ok(did_format)
 }
