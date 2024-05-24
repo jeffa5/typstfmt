@@ -21,7 +21,8 @@ test_snippet_unchanged!(fuzzed_0014, "$#L/.$",);
 test_snippet_unchanged!(fuzzed_0015, "#2[]",);
 test_snippet_unchanged!(fuzzed_0016, "$| |$",);
 test_snippet_unchanged!(fuzzed_0017, "#break",);
-test_snippet_unchanged!(fuzzed_0018, "#(..)",);
+// invalid input now!
+// test_snippet_unchanged!(fuzzed_0018, "#(..)",);
 test_snippet_unchanged!(fuzzed_0019, "#()=A",);
 test_snippet_unchanged!(fuzzed_0020, "#(..A)",);
 test_snippet_unchanged!(fuzzed_0021, "#z(..E)",);

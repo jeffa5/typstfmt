@@ -691,6 +691,7 @@ impl<'a> Renderable<'a> for Pattern<'a> {
             Pattern::Normal(expr) => expr.render(renderer),
             Pattern::Placeholder(underscore) => render_anon(underscore.to_untyped(), renderer),
             Pattern::Destructuring(destructuring) => destructuring.render(renderer),
+            Pattern::Parenthesized(parenthesized) => parenthesized.render(renderer),
         }
     }
 }
@@ -737,7 +738,10 @@ impl<'a> Renderable<'a> for Keyed<'a> {
 impl<'a> Renderable<'a> for Arg<'a> {
     fn render_impl(&self, renderer: &mut Renderer) {
         match self {
-            Arg::Pos(expr) | Arg::Spread(expr) => {
+            Arg::Pos(expr) => {
+                expr.render(renderer);
+            }
+            Arg::Spread(expr) => {
                 expr.render(renderer);
             }
             Arg::Named(named) => named.render(renderer),
@@ -750,7 +754,7 @@ impl<'a> Renderable<'a> for Param<'a> {
         match self {
             Param::Pos(pat) => pat.render(renderer),
             Param::Named(named) => named.render(renderer),
-            Param::Sink(spread) => spread.render(renderer),
+            Param::Spread(spread) => spread.render(renderer),
         }
     }
 }
@@ -758,7 +762,8 @@ impl<'a> Renderable<'a> for Param<'a> {
 impl<'a> Renderable<'a> for ArrayItem<'a> {
     fn render_impl(&self, renderer: &mut Renderer) {
         match self {
-            ArrayItem::Pos(expr) | ArrayItem::Spread(expr) => expr.render(renderer),
+            ArrayItem::Pos(expr) => expr.render(renderer),
+            ArrayItem::Spread(expr) => expr.render(renderer),
         }
     }
 }
@@ -772,6 +777,8 @@ impl<'a> Renderable<'a> for DictItem<'a> {
         }
     }
 }
+
+impl<'a> Renderable<'a> for Contextual<'a> {}
 
 impl<'a> Renderable<'a> for Expr<'a> {
     fn render_impl(&self, renderer: &mut Renderer) {
@@ -832,6 +839,7 @@ impl<'a> Renderable<'a> for Expr<'a> {
             Expr::Break(node) => node.render(renderer),
             Expr::Continue(node) => node.render(renderer),
             Expr::Return(node) => node.render(renderer),
+            Expr::Contextual(node) => node.render(renderer),
         }
     }
 }

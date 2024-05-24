@@ -236,8 +236,7 @@ fn format_file(path: &Path, config: &Config, args: &Args) -> Result<DidFormat, E
     Ok(did_format)
 }
 
-
-fn format_stdin( content: &str, config: &Config, args: &Args) -> Result<DidFormat, Error> {
+fn format_stdin(content: &str, config: &Config, args: &Args) -> Result<DidFormat, Error> {
     debug!("Formatting stdin");
 
     // TODO: remove this clone, format should take a &Config
@@ -253,10 +252,9 @@ fn format_stdin( content: &str, config: &Config, args: &Args) -> Result<DidForma
         let text_diff = similar::TextDiff::from_lines(content, &formatted);
         println!(
             "{}",
-            text_diff.unified_diff().header(
-                "stdin",
-                &format!("{}.formatted", "stdin")
-            )
+            text_diff
+                .unified_diff()
+                .header("stdin", &format!("{}.formatted", "stdin"))
         );
         if matches!(did_format, DidFormat::Yes) {
             return Err(Error::CheckFailed);
