@@ -19,10 +19,9 @@ The flake provides an overlay which you can use with nixpkgs.
 
 ### pre-commit
 
-`.pre-commit-config.yaml`:
+Add this to your `.pre-commit-config.yaml`:
 
 ```yaml
-repos:
   - repo: https://github.com/jeffa5/typstfmt
     rev: ''  # Use the sha / tag you want to point at
     hooks:
