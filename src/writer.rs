@@ -13,6 +13,7 @@ pub struct Writer {
     /// The current indentation level, in spaces.
     current_indent_level: usize,
     next_indent_level: usize,
+    incremented_indents_in_line: u32,
 }
 
 impl Writer {
@@ -24,6 +25,7 @@ impl Writer {
             line: String::new(),
             current_indent_level: 0,
             next_indent_level: 0,
+            incremented_indents_in_line: 0,
         }
     }
 
@@ -41,6 +43,7 @@ impl Writer {
         }
         self.value.push('\n');
         self.current_indent_level = self.next_indent_level;
+        self.incremented_indents_in_line = 0;
     }
 
     /// Push the current indentation amount.
@@ -86,7 +89,10 @@ impl Writer {
     /// Increases the current indentation level by the amount specified in the style.
     pub fn inc_indent(&mut self) -> &mut Self {
         debug!("inc_indent");
-        self.next_indent_level = self.next_indent_level.saturating_add(self.config.indent);
+        if self.incremented_indents_in_line == 0 {
+            self.next_indent_level = self.next_indent_level.saturating_add(self.config.indent);
+            self.incremented_indents_in_line += 1;
+        }
         self
     }
 
@@ -95,6 +101,7 @@ impl Writer {
         debug!("dec_indent");
         self.next_indent_level = self.next_indent_level.saturating_sub(self.config.indent);
         self.current_indent_level = self.next_indent_level;
+        self.incremented_indents_in_line = self.incremented_indents_in_line.saturating_sub(1);
         self
     }
 

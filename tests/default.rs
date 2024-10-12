@@ -333,3 +333,17 @@ test_snippet! {
   abc
 ]"#,
 }
+
+test_snippet! {
+    multiline_nested,
+    expect = r#"
+#block(block(block(
+  width: 100%,
+)))
+"#,
+    r#"
+#block(block(block(
+  width: 100%,
+)))
+"#,
+}
