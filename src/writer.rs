@@ -91,17 +91,19 @@ impl Writer {
         debug!("inc_indent");
         if self.incremented_indents_in_line == 0 {
             self.next_indent_level = self.next_indent_level.saturating_add(self.config.indent);
-            self.incremented_indents_in_line += 1;
         }
+        self.incremented_indents_in_line += 1;
         self
     }
 
     /// Decreases the current indentation level by the amount specified in the style.
     pub fn dec_indent(&mut self) -> &mut Self {
         debug!("dec_indent");
-        self.next_indent_level = self.next_indent_level.saturating_sub(self.config.indent);
-        self.current_indent_level = self.next_indent_level;
         self.incremented_indents_in_line = self.incremented_indents_in_line.saturating_sub(1);
+        if self.incremented_indents_in_line == 0 {
+            self.next_indent_level = self.next_indent_level.saturating_sub(self.config.indent);
+            self.current_indent_level = self.next_indent_level;
+        }
         self
     }
 
