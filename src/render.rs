@@ -177,6 +177,8 @@ fn render_anon(node: &SyntaxNode, renderer: &mut Renderer) {
             }
             _ => unreachable!(),
         }
+    } else if node.kind() == SyntaxKind::RawTrimmed {
+        renderer.writer.push_raw(node.text());
     } else if node.kind() == SyntaxKind::LineComment {
         renderer.writer.push(node.text());
         renderer.writer.newline();
@@ -541,7 +543,11 @@ impl<'a> Renderable<'a> for Bool<'a> {}
 impl<'a> Renderable<'a> for Int<'a> {}
 impl<'a> Renderable<'a> for Float<'a> {}
 impl<'a> Renderable<'a> for Numeric<'a> {}
-impl<'a> Renderable<'a> for Str<'a> {}
+impl<'a> Renderable<'a> for Str<'a> {
+    fn render_impl(&self, renderer: &mut Renderer) {
+        renderer.writer.push_raw(self.to_untyped().text());
+    }
+}
 
 impl<'a> Renderable<'a> for ContentBlock<'a> {
     fn render_impl(&self, renderer: &mut Renderer) {

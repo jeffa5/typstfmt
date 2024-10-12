@@ -64,6 +64,13 @@ impl Writer {
         self
     }
 
+    /// Appends the given text to the buffer.
+    pub fn push_raw(&mut self, s: &str) -> &mut Self {
+        debug!(?s, "push_raw");
+        self.line.push_str(s);
+        self
+    }
+
     pub fn parbreak(&mut self) -> &mut Self {
         if !self.line.is_empty() {
             self.newline();
