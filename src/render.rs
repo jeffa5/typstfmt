@@ -5,6 +5,145 @@ use typst::syntax::{ast::*, SyntaxKind, SyntaxNode};
 
 use crate::{writer::Writer, Config};
 
+fn is_multiline(children: &Children) -> bool {
+    children.any(|c| c.text().contains('\n'))
+}
+
+fn is_block(node: &SyntaxNode) -> bool {
+    match node.kind() {
+        SyntaxKind::Markup => false,
+        SyntaxKind::Text => false,
+        SyntaxKind::Space => false,
+        SyntaxKind::Linebreak => false,
+        SyntaxKind::Parbreak => false,
+        SyntaxKind::Escape => false,
+        SyntaxKind::Shorthand => false,
+        SyntaxKind::SmartQuote => false,
+        SyntaxKind::Strong => false,
+        SyntaxKind::Emph => false,
+        SyntaxKind::Raw => false,
+        SyntaxKind::RawLang => false,
+        SyntaxKind::RawDelim => false,
+        SyntaxKind::RawTrimmed => false,
+        SyntaxKind::Link => false,
+        SyntaxKind::Label => false,
+        SyntaxKind::Ref => false,
+        SyntaxKind::RefMarker => false,
+        SyntaxKind::Heading => false,
+        SyntaxKind::HeadingMarker => false,
+        SyntaxKind::ListItem => true,
+        SyntaxKind::ListMarker => false,
+        SyntaxKind::EnumItem => true,
+        SyntaxKind::EnumMarker => false,
+        SyntaxKind::TermItem => true,
+        SyntaxKind::TermMarker => false,
+        SyntaxKind::Equation => false,
+        SyntaxKind::Math => false,
+        SyntaxKind::MathIdent => false,
+        SyntaxKind::MathAlignPoint => false,
+        SyntaxKind::MathDelimited => false,
+        SyntaxKind::MathAttach => false,
+        SyntaxKind::MathPrimes => false,
+        SyntaxKind::MathFrac => false,
+        SyntaxKind::MathRoot => false,
+        SyntaxKind::Hash => false,
+        SyntaxKind::LeftBrace => false,
+        SyntaxKind::RightBrace => false,
+        SyntaxKind::LeftBracket => false,
+        SyntaxKind::RightBracket => false,
+        SyntaxKind::LeftParen => false,
+        SyntaxKind::RightParen => false,
+        SyntaxKind::Comma => false,
+        SyntaxKind::Semicolon => false,
+        SyntaxKind::Colon => false,
+        SyntaxKind::Star => false,
+        SyntaxKind::Underscore => false,
+        SyntaxKind::Dollar => false,
+        SyntaxKind::Plus => false,
+        SyntaxKind::Minus => false,
+        SyntaxKind::Slash => false,
+        SyntaxKind::Hat => false,
+        SyntaxKind::Prime => false,
+        SyntaxKind::Dot => false,
+        SyntaxKind::Eq => false,
+        SyntaxKind::EqEq => false,
+        SyntaxKind::ExclEq => false,
+        SyntaxKind::Lt => false,
+        SyntaxKind::LtEq => false,
+        SyntaxKind::Gt => false,
+        SyntaxKind::GtEq => false,
+        SyntaxKind::PlusEq => false,
+        SyntaxKind::HyphEq => false,
+        SyntaxKind::StarEq => false,
+        SyntaxKind::SlashEq => false,
+        SyntaxKind::Dots => false,
+        SyntaxKind::Arrow => false,
+        SyntaxKind::Root => false,
+        SyntaxKind::Not => false,
+        SyntaxKind::And => false,
+        SyntaxKind::Or => false,
+        SyntaxKind::None => false,
+        SyntaxKind::Auto => false,
+        SyntaxKind::Let => false,
+        SyntaxKind::Set => false,
+        SyntaxKind::Show => false,
+        SyntaxKind::Context => false,
+        SyntaxKind::If => false,
+        SyntaxKind::Else => false,
+        SyntaxKind::For => false,
+        SyntaxKind::In => false,
+        SyntaxKind::While => false,
+        SyntaxKind::Break => false,
+        SyntaxKind::Continue => false,
+        SyntaxKind::Return => false,
+        SyntaxKind::Import => false,
+        SyntaxKind::Include => false,
+        SyntaxKind::As => false,
+        SyntaxKind::Code => false,
+        SyntaxKind::Ident => false,
+        SyntaxKind::Bool => false,
+        SyntaxKind::Int => false,
+        SyntaxKind::Float => false,
+        SyntaxKind::Numeric => false,
+        SyntaxKind::Str => false,
+        SyntaxKind::CodeBlock => false,
+        SyntaxKind::ContentBlock => false,
+        SyntaxKind::Parenthesized => false,
+        SyntaxKind::Array => false,
+        SyntaxKind::Dict => false,
+        SyntaxKind::Named => false,
+        SyntaxKind::Keyed => false,
+        SyntaxKind::Unary => false,
+        SyntaxKind::Binary => false,
+        SyntaxKind::FieldAccess => false,
+        SyntaxKind::FuncCall => false,
+        SyntaxKind::Args => false,
+        SyntaxKind::Spread => false,
+        SyntaxKind::Closure => false,
+        SyntaxKind::Params => false,
+        SyntaxKind::LetBinding => false,
+        SyntaxKind::SetRule => false,
+        SyntaxKind::ShowRule => false,
+        SyntaxKind::Contextual => false,
+        SyntaxKind::Conditional => false,
+        SyntaxKind::WhileLoop => false,
+        SyntaxKind::ForLoop => false,
+        SyntaxKind::ModuleImport => false,
+        SyntaxKind::ImportItems => false,
+        SyntaxKind::RenamedImportItem => false,
+        SyntaxKind::ModuleInclude => false,
+        SyntaxKind::LoopBreak => false,
+        SyntaxKind::LoopContinue => false,
+        SyntaxKind::FuncReturn => false,
+        SyntaxKind::Destructuring => false,
+        SyntaxKind::DestructAssignment => false,
+        SyntaxKind::LineComment => true,
+        SyntaxKind::BlockComment => node.text().contains('\n'),
+        SyntaxKind::Error => false,
+        SyntaxKind::Eof => false,
+    }
+}
+
 /// Renderer that has the information for writing out.
 pub struct Renderer {
     pub writer: Writer,
@@ -44,20 +183,27 @@ fn render_anon(node: &SyntaxNode, renderer: &mut Renderer) {
         }
     } else if renderer.config().spacing && node.kind() == SyntaxKind::LineComment {
         renderer.writer.push(node.text());
-        if renderer.config().multiline {
-            renderer.writer.newline_with_indent();
-        }
+        renderer.writer.newline();
     } else if renderer.config().spacing && node.kind() == SyntaxKind::BlockComment {
         if node.text().contains('\n') {
             for line in node.text().lines() {
-                let line = line.trim();
-                if line.starts_with('*') {
-                    // align the stars
-                    if renderer.config().spacing {
-                        renderer.writer.push(" ");
-                    }
+                let mut line = line.trim();
+                if !line.starts_with("/*") && line != "*/" {
+                    line = line.trim_start_matches('*');
+                    line = line.trim();
+                    renderer.writer.push(" * ");
                 }
-                renderer.writer.push(line).newline_with_indent();
+                let mut add_ending = false;
+                if line.ends_with("*/") {
+                    line = line.trim_end_matches("*/");
+                    line = line.trim();
+                    add_ending = true;
+                };
+                renderer.writer.push(line);
+                if add_ending {
+                    renderer.writer.push(" */");
+                }
+                renderer.writer.newline();
             }
         } else {
             renderer.writer.push(node.text());
@@ -206,19 +352,24 @@ impl<'a> Children<'a> {
 impl<'a> Renderable<'a> for Markup<'a> {
     fn render_impl(&self, renderer: &mut Renderer) {
         let mut children = Children::new(self.to_untyped());
+        let mut last = None;
         while children.next().is_some() {
             let child = children.current().unwrap();
             if let Some(parbreak) = child.cast::<Parbreak>() {
                 if children.peek_prev().is_some() && children.peek_next().is_some() {
                     parbreak.render(renderer);
                 } else {
-                    renderer.writer.newline_with_indent();
+                    renderer.writer.newline();
                 }
             } else if let Some(expr) = child.cast::<Expr>() {
                 expr.render(renderer);
+            } else if last.map_or(false, |n| is_block(&n)) && child.kind() == SyntaxKind::Space {
+                // skip adding newlines or spacing after block elements as they handle newlines
+                // themselves
             } else {
                 render_anon(child, renderer);
             }
+            last = Some((*child).clone());
         }
     }
 }
@@ -251,7 +402,7 @@ impl<'a> Renderable<'a> for Space<'a> {
                 renderer.writer.parbreak();
             } else if text.contains('\n') {
                 // convert newlines to newlines with indent
-                renderer.writer.newline_with_indent();
+                renderer.writer.newline();
             } else {
                 renderer.writer.space();
             }
@@ -312,7 +463,7 @@ impl<'a> Renderable<'a> for ListItem<'a> {
                 render_anon(child, renderer);
             }
         }
-        renderer.writer.dec_indent();
+        renderer.writer.newline().dec_indent();
     }
 }
 impl<'a> Renderable<'a> for EnumItem<'a> {
@@ -331,7 +482,7 @@ impl<'a> Renderable<'a> for EnumItem<'a> {
                 render_anon(child, renderer);
             }
         }
-        renderer.writer.dec_indent();
+        renderer.writer.newline().dec_indent();
     }
 }
 impl<'a> Renderable<'a> for TermItem<'a> {
@@ -355,7 +506,7 @@ impl<'a> Renderable<'a> for TermItem<'a> {
                 render_anon(child, renderer);
             }
         }
-        renderer.writer.dec_indent();
+        renderer.writer.newline().dec_indent();
     }
 }
 
@@ -438,11 +589,10 @@ impl<'a> Renderable<'a> for Array<'a> {
 impl<'a> Renderable<'a> for Dict<'a> {
     fn render_impl(&self, renderer: &mut Renderer) {
         let mut children = Children::new(self.to_untyped());
-        let multiline = renderer.config().multiline
-            && children.any(|c| c.kind() == SyntaxKind::Space && c.text().contains('\n'));
+        let multiline = is_multiline(&children);
         let past_argument = |children: &Children, renderer: &mut Renderer| {
             if multiline {
-                renderer.writer.push(",").newline_with_indent();
+                renderer.writer.push(",").newline();
             } else if children.has_next(|k| {
                 !k.is_trivia()
                     && !k.is_grouping()
@@ -466,10 +616,7 @@ impl<'a> Renderable<'a> for Dict<'a> {
                 spread.render(renderer);
                 past_argument(&children, renderer);
             } else if multiline && child.kind() == SyntaxKind::LeftParen {
-                renderer
-                    .writer
-                    .open_grouping(child.text())
-                    .newline_with_indent();
+                renderer.writer.open_grouping(child.text()).newline();
             } else if child.kind() == SyntaxKind::Comma
                 || (renderer.config().spacing && child.kind() == SyntaxKind::Space)
             {
@@ -488,7 +635,7 @@ impl<'a> Renderable<'a> for Unary<'a> {
 impl<'a> Renderable<'a> for Binary<'a> {
     fn render_impl(&self, renderer: &mut Renderer) {
         let mut children = Children::new(self.to_untyped());
-        while let Some(child) = children.next().map(|c| *c).cloned() {
+        while let Some(child) = children.next().copied().cloned() {
             if let Some(expr) = child.cast::<Expr>() {
                 expr.render(renderer);
             } else if renderer.config().spacing && BinOp::from_kind(child.kind()).is_some() {
@@ -497,7 +644,7 @@ impl<'a> Renderable<'a> for Binary<'a> {
                 && (child.kind() == SyntaxKind::Not
                     && children
                         .peek_next_non_space()
-                        .map_or(false, |n| dbg!(n).kind() == SyntaxKind::In))
+                        .map_or(false, |n| n.kind() == SyntaxKind::In))
             {
                 renderer.writer.push(" ").push(child.text());
             } else if renderer.config().spacing && child.kind() == SyntaxKind::Space {
@@ -627,7 +774,7 @@ impl<'a> Renderable<'a> for Conditional<'a> {
                     p.kind() == SyntaxKind::Space && p.text().contains('\n')
                 })
             {
-                renderer.writer.newline_with_indent();
+                renderer.writer.newline();
             } else if renderer.config().spacing {
                 renderer.writer.push(" ");
             }
@@ -848,14 +995,13 @@ impl<'a> Renderable<'a> for Expr<'a> {
 // include the dots.
 fn render_args(node: &SyntaxNode, renderer: &mut Renderer) {
     let mut children = Children::new(node);
-    let multiline = renderer.config().multiline
-        && children.any(|c| c.kind() == SyntaxKind::Space && c.text().contains('\n'));
+    let multiline = is_multiline(&children);
     debug!(?node, ?multiline, "render_args");
     let mut in_parens = false;
     let past_argument = |children: &Children, renderer: &mut Renderer, in_parens: bool| {
         if in_parens {
             if multiline {
-                renderer.writer.push(",").newline_with_indent();
+                renderer.writer.push(",").newline();
             } else if children.has_next(|k| {
                 !k.is_trivia()
                     && !k.is_grouping()
@@ -882,10 +1028,7 @@ fn render_args(node: &SyntaxNode, renderer: &mut Renderer) {
         } else if child.kind() == SyntaxKind::LeftParen {
             in_parens = true;
             if multiline {
-                renderer
-                    .writer
-                    .open_grouping(child.text())
-                    .newline_with_indent();
+                renderer.writer.open_grouping(child.text()).newline();
             } else {
                 render_anon(child, renderer);
             }
@@ -903,13 +1046,12 @@ fn render_args(node: &SyntaxNode, renderer: &mut Renderer) {
 fn render_params(node: &SyntaxNode, renderer: &mut Renderer) {
     debug!(?node, "render_params");
     let mut children = Children::new(node);
-    let multiline = renderer.config().multiline
-        && children.any(|c| c.kind() == SyntaxKind::Space && c.text().contains('\n'));
+    let multiline = is_multiline(&children);
     while let Some(child) = children.next() {
         if let Some(param) = child.cast::<Param>() {
             param.render(renderer);
             if multiline {
-                renderer.writer.push(",").newline_with_indent();
+                renderer.writer.push(",").newline();
             } else if children.has_next(|k| !k.is_trivia() && !k.is_grouping()) {
                 renderer.writer.push(",");
                 if renderer.config().spacing {
@@ -917,10 +1059,7 @@ fn render_params(node: &SyntaxNode, renderer: &mut Renderer) {
                 }
             }
         } else if multiline && child.kind() == SyntaxKind::LeftParen {
-            renderer
-                .writer
-                .open_grouping(child.text())
-                .newline_with_indent();
+            renderer.writer.open_grouping(child.text()).newline();
         } else if child.kind() == SyntaxKind::Comma || child.kind() == SyntaxKind::Space {
             // skip
         } else {

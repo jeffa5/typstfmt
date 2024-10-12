@@ -12,7 +12,8 @@ test_snippet!(
     expect = r"
 #{
   a()[]
-}",
+}
+",
     "#{\na()[]\n}",
 );
 test_snippet!(
@@ -21,48 +22,49 @@ test_snippet!(
 #{
   a()[]
   b()[]
-}",
+}
+",
     "#{\na()[]\nb()[]\n}",
 );
 
-test_snippet!(plain_text, expect = "hello world", "hello   world",);
+test_snippet!(plain_text, expect = "hello world\n", "hello   world",);
 
-test_snippet!(let_binding, expect = "#let x = 4", "#let x=4",);
+test_snippet!(let_binding, expect = "#let x = 4\n", "#let x=4",);
 
 test_snippet!(
     function_single_line,
-    expect = "#let f(a, b, c) = {a + (b - c)}",
+    expect = "#let f(a, b, c) = {a + (b - c)}\n",
     "#let f(a,b,c) = {a+(b - c)}",
 );
 
 test_snippet!(
     function_spread_arg,
-    expect = "#f(..s, k: v)",
+    expect = "#f(..s, k: v)\n",
     "#f(..s, k: v)",
 );
 
-test_snippet!(function_content_arg, expect = "#k(2)[]", "#k(2)[]",);
+test_snippet!(function_content_arg, expect = "#k(2)[]\n", "#k(2)[]",);
 
-test_snippet!(function_content_args, expect = "#k[][]", "#k[][]",);
+test_snippet!(function_content_args, expect = "#k[][]\n", "#k[][]",);
 
 test_snippet!(
     function_multi_line,
     expect =
-        "#let f(\n  /// test comment\n  a,\n  /// another comment\n  b,\n  c,\n) = {a + (b - c)}",
+        "#let f(\n  /// test comment\n  a,\n  /// another comment\n  b,\n  c,\n) = {a + (b - c)}\n",
     "#let f(/// test comment\na,\n/// another comment\nb,c) = {a+(b - c)}",
 );
 
-test_snippet!(dict_spread_arg, expect = "#(..t, p: p)", "#(..t,p:p)",);
+test_snippet!(dict_spread_arg, expect = "#(..t, p: p)\n", "#(..t,p:p)",);
 
 test_snippet!(
     content,
-    expect = "*strong*\nnormal\n_emph_\n\nnew para",
+    expect = "*strong*\nnormal\n_emph_\n\nnew para\n",
     "*strong*\nnormal\n_emph_\n\nnew para",
 );
 
 test_snippet!(
     content_block_indent,
-    expect = "#[\n  *strong*\n  normal\n  _emph_\n\n  new para\n]",
+    expect = "#[\n  *strong*\n  normal\n  _emph_\n\n  new para\n]\n",
     "#[\n*strong*\nnormal\n_emph_\n\nnew para\n]",
 );
 
@@ -72,7 +74,8 @@ test_snippet!(
 #let f(
   a,
   b,
-) = a + b",
+) = a + b
+",
     "#let f(\na,\nb,\n) = a + b",
 );
 
@@ -83,7 +86,8 @@ test_snippet!(
   1
   2
   3
-}",
+}
+",
     "#{\n1\n2\n3\n}",
 );
 
@@ -103,7 +107,8 @@ Dear Joe,
 
 #lorem(9)
 
-Best,"#,
+Best,
+"#,
     r#"#import "template.typ": *
 #show: letter.with(sender:[Jane Smith, Universal Exports, 1 Heavy Plaza, Morristown, NJ 07964,],
 recipient: [Mr. John Doe \ Acme Corp. \ 123 Glennwood Ave \ Quarto Creek, VA 22438],date: [Morristown, June 9th, 2023,],subject: [test],name: [Jane Smith \Regional Director],)
@@ -124,7 +129,8 @@ test_snippet! {
      * the body
      */
   ]
-}"##,
+}
+"##,
     r##"#{
 f(
 )[
@@ -137,13 +143,15 @@ f(
 
 test_snippet! {
     conditional_spacing,
-    expect = r##"#if false {} else if true {} else {}"##,
+    expect = r##"#if false {} else if true {} else {}
+"##,
     r##"#if false{}else if true{}else{}"##,
 }
 
 test_snippet! {
     conditional_spaces,
-    expect = r##"#if false {} else if true {} else {}"##,
+    expect = r##"#if false {} else if true {} else {}
+"##,
     r##"#if          false        {}       else      if      true       {}   else   {}"##,
 }
 
@@ -154,7 +162,8 @@ test_snippet! {
   if false {}
   else if true {}
   else {}
-}"##,
+}
+"##,
     r##"#{
     if false {}
 else if true {}
@@ -165,14 +174,14 @@ else {}
 test_snippet! {
     nested_array_with_args,
     ignore = "invalid parsing: contains error",
-    expect = r##"#((d: 2),)"##,
+    expect = r##"#((d: 2),)\n"##,
     r##"#((d: 2,),)"##,
 }
 
 test_snippet! {
     nested_array_with_args_2,
     ignore = "invalid parsing: contains error",
-    expect = r##"#((d: 2))"##,
+    expect = r##"#((d: 2))\n"##,
     r##"#((d: 2 ,))"##,
 }
 
@@ -216,7 +225,7 @@ test_snippet! {
     closure_arg_spacing,
     expect = r"
 #locate(loc => {
-  })
+})
 ",
     r"
 #locate(loc=>{
@@ -266,6 +275,22 @@ test_snippet! {
 }
 
 test_snippet! {
+    inline_comment_double_line,
+    expect = r"
+#let f(
+  /*inline comment part 1
+   * part 2 */
+  a,
+) = {}
+",
+    r"
+#let f(/*inline comment part 1
+part 2*/a) = {}
+",
+}
+
+
+test_snippet! {
     comment_newlines_following,
     expect = r"
 // test comment
@@ -302,7 +327,8 @@ test_snippet! {
     not_in,
     expect = r#"#if "a" not in ("b",) [
   abc
-]"#,
+]
+"#,
     r#"#if "a" not in ("b",) [
   abc
 ]"#,
