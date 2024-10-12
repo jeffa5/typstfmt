@@ -3,13 +3,11 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    crate2nix.url = "github:jeffa5/crate2nix";
   };
 
   outputs = {
     self,
     nixpkgs,
-    crate2nix,
   }: let
     system = "x86_64-linux";
 
@@ -42,9 +40,8 @@
 
           cargo-watch
           cargo-fuzz
-        ]
-        ++ [
-          crate2nix.packages.${system}.crate2nix
+
+          crate2nix
         ];
     };
   };

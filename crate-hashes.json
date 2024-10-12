@@ -1,6 +1,6 @@
 {
-  "typst 0.11.1 (git+https://github.com/typst/typst.git?rev=v0.11.1#5011510270c2c23f0ab019af486b26db0d62261b)": "09gnmr8qp4v9kx7zl5r2dwzpdra68hb7n7pq2fnr89819xaj7a0m",
-  "typst-macros 0.11.1 (git+https://github.com/typst/typst.git?rev=v0.11.1#5011510270c2c23f0ab019af486b26db0d62261b)": "09gnmr8qp4v9kx7zl5r2dwzpdra68hb7n7pq2fnr89819xaj7a0m",
-  "typst-syntax 0.11.1 (git+https://github.com/typst/typst.git?rev=v0.11.1#5011510270c2c23f0ab019af486b26db0d62261b)": "09gnmr8qp4v9kx7zl5r2dwzpdra68hb7n7pq2fnr89819xaj7a0m",
-  "typst-timing 0.11.1 (git+https://github.com/typst/typst.git?rev=v0.11.1#5011510270c2c23f0ab019af486b26db0d62261b)": "09gnmr8qp4v9kx7zl5r2dwzpdra68hb7n7pq2fnr89819xaj7a0m"
+  "git+https://github.com/typst/typst.git?rev=v0.11.1#typst-macros@0.11.1": "09gnmr8qp4v9kx7zl5r2dwzpdra68hb7n7pq2fnr89819xaj7a0m",
+  "git+https://github.com/typst/typst.git?rev=v0.11.1#typst-syntax@0.11.1": "09gnmr8qp4v9kx7zl5r2dwzpdra68hb7n7pq2fnr89819xaj7a0m",
+  "git+https://github.com/typst/typst.git?rev=v0.11.1#typst-timing@0.11.1": "09gnmr8qp4v9kx7zl5r2dwzpdra68hb7n7pq2fnr89819xaj7a0m",
+  "git+https://github.com/typst/typst.git?rev=v0.11.1#typst@0.11.1": "09gnmr8qp4v9kx7zl5r2dwzpdra68hb7n7pq2fnr89819xaj7a0m"
 }
