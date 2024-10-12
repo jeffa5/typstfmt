@@ -373,12 +373,17 @@ impl<'a> Renderable<'a> for Markup<'a> {
 impl<'a> Renderable<'a> for CodeBlock<'a> {
     fn render_impl(&self, renderer: &mut Renderer) {
         let mut children = Children::new(self.to_untyped());
+        let mut last = None;
         while let Some(child) = children.next() {
             if let Some(code) = child.cast::<Code>() {
                 code.render(renderer);
+            } else if last.map_or(false, |n| is_block(&n)) && child.kind() == SyntaxKind::Space {
+                // skip adding newlines or spacing after block elements as they handle newlines
+                // themselves
             } else {
                 render_anon(child, renderer);
             }
+            last = Some((*child).clone());
         }
     }
 }

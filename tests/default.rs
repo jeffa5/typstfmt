@@ -1,11 +1,20 @@
 #[macro_use]
 mod common;
 
+test_snippet!(comment, expect = "// a line comment\n", "// a line comment",);
+
 test_snippet!(
     comments,
-    expect = "// a line comment\n",
-    "// a line comment",
+    expect = "// a line comment\n// another\n",
+    "// a line comment\n// another",
 );
+
+test_snippet!(
+    indented_comments,
+    expect = "#{\n  // a line comment\n  // another\n}\n",
+    "#{\n// a line comment\n// another\n}",
+);
+
 
 test_snippet!(
     codeblock_single,
@@ -288,7 +297,6 @@ test_snippet! {
 part 2*/a) = {}
 ",
 }
-
 
 test_snippet! {
     comment_newlines_following,
