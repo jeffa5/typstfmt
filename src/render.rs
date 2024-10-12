@@ -3,7 +3,7 @@ use std::unreachable;
 use tracing::debug;
 use typst::syntax::{ast::*, SyntaxKind, SyntaxNode};
 
-use crate::{writer::Writer, Config};
+use crate::writer::Writer;
 
 fn is_multiline(children: &Children) -> bool {
     children.any(|c| c.text().contains('\n'))
@@ -160,10 +160,6 @@ impl Renderer {
     pub fn finish(self) -> String {
         self.writer.finish()
     }
-
-    fn config(&self) -> &Config {
-        self.writer.config()
-    }
 }
 
 /// Render all text from a general syntax node.
@@ -181,10 +177,10 @@ fn render_anon(node: &SyntaxNode, renderer: &mut Renderer) {
             }
             _ => unreachable!(),
         }
-    } else if renderer.config().spacing && node.kind() == SyntaxKind::LineComment {
+    } else if node.kind() == SyntaxKind::LineComment {
         renderer.writer.push(node.text());
         renderer.writer.newline();
-    } else if renderer.config().spacing && node.kind() == SyntaxKind::BlockComment {
+    } else if node.kind() == SyntaxKind::BlockComment {
         if node.text().contains('\n') {
             for line in node.text().lines() {
                 let mut line = line.trim();
@@ -396,29 +392,21 @@ impl<'a> Renderable<'a> for Code<'a> {
 impl<'a> Renderable<'a> for Text<'a> {}
 impl<'a> Renderable<'a> for Space<'a> {
     fn render_impl(&self, renderer: &mut Renderer) {
-        if renderer.config().spacing {
-            let text = self.to_untyped().text();
-            if text.contains("\n\n") {
-                renderer.writer.parbreak();
-            } else if text.contains('\n') {
-                // convert newlines to newlines with indent
-                renderer.writer.newline();
-            } else {
-                renderer.writer.space();
-            }
+        let text = self.to_untyped().text();
+        if text.contains("\n\n") {
+            renderer.writer.parbreak();
+        } else if text.contains('\n') {
+            // convert newlines to newlines with indent
+            renderer.writer.newline();
         } else {
-            renderer.writer.push(self.to_untyped().text());
+            renderer.writer.space();
         }
     }
 }
 impl<'a> Renderable<'a> for Linebreak<'a> {}
 impl<'a> Renderable<'a> for Parbreak<'a> {
     fn render_impl(&self, renderer: &mut Renderer) {
-        if renderer.config().spacing {
-            renderer.writer.parbreak();
-        } else {
-            render_anon(self.to_untyped(), renderer)
-        }
+        renderer.writer.parbreak();
     }
 }
 impl<'a> Renderable<'a> for Escape<'a> {}
@@ -453,11 +441,9 @@ impl<'a> Renderable<'a> for ListItem<'a> {
         while let Some(child) = children.next() {
             if child.kind() == SyntaxKind::ListMarker {
                 render_anon(child, renderer);
-                if renderer.config().spacing {
-                    renderer.writer.space();
-                }
+                renderer.writer.space();
                 renderer.writer.inc_indent();
-            } else if renderer.config().spacing && child.kind() == SyntaxKind::Space {
+            } else if child.kind() == SyntaxKind::Space {
                 // skip
             } else {
                 render_anon(child, renderer);
@@ -472,11 +458,9 @@ impl<'a> Renderable<'a> for EnumItem<'a> {
         while let Some(child) = children.next() {
             if child.kind() == SyntaxKind::EnumMarker {
                 render_anon(child, renderer);
-                if renderer.config().spacing {
-                    renderer.writer.space();
-                }
+                renderer.writer.space();
                 renderer.writer.inc_indent();
-            } else if renderer.config().spacing && child.kind() == SyntaxKind::Space {
+            } else if child.kind() == SyntaxKind::Space {
                 // skip
             } else {
                 render_anon(child, renderer);
@@ -491,16 +475,12 @@ impl<'a> Renderable<'a> for TermItem<'a> {
         while let Some(child) = children.next() {
             if child.kind() == SyntaxKind::TermMarker {
                 render_anon(child, renderer);
-                if renderer.config().spacing {
-                    renderer.writer.space();
-                }
+                renderer.writer.space();
                 renderer.writer.inc_indent();
             } else if child.kind() == SyntaxKind::Colon {
                 renderer.writer.push(":");
-                if renderer.config().spacing {
-                    renderer.writer.space();
-                }
-            } else if renderer.config().spacing && child.kind() == SyntaxKind::Space {
+                renderer.writer.space();
+            } else if child.kind() == SyntaxKind::Space {
                 // skip
             } else {
                 render_anon(child, renderer);
@@ -600,9 +580,7 @@ impl<'a> Renderable<'a> for Dict<'a> {
                     && k != SyntaxKind::Comma
             }) {
                 renderer.writer.push(",");
-                if renderer.config().spacing {
-                    renderer.writer.push(" ");
-                }
+                renderer.writer.push(" ");
             }
         };
         while let Some(child) = children.next() {
@@ -617,9 +595,7 @@ impl<'a> Renderable<'a> for Dict<'a> {
                 past_argument(&children, renderer);
             } else if multiline && child.kind() == SyntaxKind::LeftParen {
                 renderer.writer.open_grouping(child.text()).newline();
-            } else if child.kind() == SyntaxKind::Comma
-                || (renderer.config().spacing && child.kind() == SyntaxKind::Space)
-            {
+            } else if child.kind() == SyntaxKind::Comma || child.kind() == SyntaxKind::Space {
                 // skip
             } else {
                 render_anon(child, renderer);
@@ -638,16 +614,15 @@ impl<'a> Renderable<'a> for Binary<'a> {
         while let Some(child) = children.next().copied().cloned() {
             if let Some(expr) = child.cast::<Expr>() {
                 expr.render(renderer);
-            } else if renderer.config().spacing && BinOp::from_kind(child.kind()).is_some() {
+            } else if BinOp::from_kind(child.kind()).is_some() {
                 renderer.writer.push(" ").push(child.text()).push(" ");
-            } else if renderer.config().spacing
-                && (child.kind() == SyntaxKind::Not
-                    && children
-                        .peek_next_non_space()
-                        .map_or(false, |n| n.kind() == SyntaxKind::In))
+            } else if child.kind() == SyntaxKind::Not
+                && children
+                    .peek_next_non_space()
+                    .map_or(false, |n| n.kind() == SyntaxKind::In)
             {
                 renderer.writer.push(" ").push(child.text());
-            } else if renderer.config().spacing && child.kind() == SyntaxKind::Space {
+            } else if child.kind() == SyntaxKind::Space {
                 // skip
             } else {
                 render_anon(&child, renderer)
@@ -682,14 +657,10 @@ impl<'a> Renderable<'a> for Closure<'a> {
             } else if child.kind() == SyntaxKind::Params {
                 render_params(child, renderer);
             } else if matches!(child.kind(), SyntaxKind::Arrow | SyntaxKind::Eq) {
-                if renderer.config().spacing {
-                    renderer.writer.space();
-                }
+                renderer.writer.space();
                 renderer.writer.push(child.text());
-                if renderer.config().spacing {
-                    renderer.writer.space();
-                }
-            } else if renderer.config().spacing && child.kind() == SyntaxKind::Space {
+                renderer.writer.space();
+            } else if child.kind() == SyntaxKind::Space {
                 // skip
             } else if let Some(typed) = child.cast::<Ident>() {
                 typed.render(renderer);
@@ -708,27 +679,21 @@ impl<'a> Renderable<'a> for LetBinding<'a> {
             } else if let Some(named) = child.cast::<Pattern>() {
                 named.render(renderer);
             } else if child.kind() == SyntaxKind::Eq {
-                if renderer.config().spacing
-                    && !children.peek_prev().map_or(false, |n| {
-                        n.kind() != SyntaxKind::Space && n.text().ends_with(' ')
-                    })
-                {
+                if !children.peek_prev().map_or(false, |n| {
+                    n.kind() != SyntaxKind::Space && n.text().ends_with(' ')
+                }) {
                     renderer.writer.push(" ");
                 }
                 renderer.writer.push("=");
-                if renderer.config().spacing
-                    && !children.peek_next().map_or(false, |n| {
-                        n.kind() != SyntaxKind::Space && n.text().starts_with(' ')
-                    })
-                {
+                if !children.peek_next().map_or(false, |n| {
+                    n.kind() != SyntaxKind::Space && n.text().starts_with(' ')
+                }) {
                     renderer.writer.push(" ");
                 }
             } else if child.kind() == SyntaxKind::Let {
                 renderer.writer.push("let");
-                if renderer.config().spacing {
-                    renderer.writer.push(" ");
-                }
-            } else if renderer.config().spacing && child.kind() == SyntaxKind::Space {
+                renderer.writer.push(" ");
+            } else if child.kind() == SyntaxKind::Space {
                 // skip
             } else {
                 render_anon(child, renderer);
@@ -769,13 +734,11 @@ impl<'a> Renderable<'a> for Conditional<'a> {
     fn render_impl(&self, renderer: &mut Renderer) {
         let mut children = Children::new(self.to_untyped());
         let spacing = |children: &Children, renderer: &mut Renderer| {
-            if renderer.config().multiline
-                && children.peek_prev().map_or(false, |p| {
-                    p.kind() == SyntaxKind::Space && p.text().contains('\n')
-                })
-            {
+            if children.peek_prev().map_or(false, |p| {
+                p.kind() == SyntaxKind::Space && p.text().contains('\n')
+            }) {
                 renderer.writer.newline();
-            } else if renderer.config().spacing {
+            } else {
                 renderer.writer.push(" ");
             }
         };
@@ -858,10 +821,8 @@ impl<'a> Renderable<'a> for Named<'a> {
                 ident.render(renderer);
             } else if child.kind() == SyntaxKind::Colon {
                 renderer.writer.push(":");
-                if renderer.config().spacing {
-                    renderer.writer.push(" ");
-                }
-            } else if renderer.config().spacing && child.kind() == SyntaxKind::Space {
+                renderer.writer.push(" ");
+            } else if child.kind() == SyntaxKind::Space {
                 // skip
             } else {
                 render_anon(child, renderer);
@@ -1009,9 +970,7 @@ fn render_args(node: &SyntaxNode, renderer: &mut Renderer) {
                     && k != SyntaxKind::Colon
             }) {
                 renderer.writer.push(",");
-                if renderer.config().spacing {
-                    renderer.writer.push(" ");
-                }
+                renderer.writer.push(" ");
             }
         }
     };
@@ -1054,9 +1013,7 @@ fn render_params(node: &SyntaxNode, renderer: &mut Renderer) {
                 renderer.writer.push(",").newline();
             } else if children.has_next(|k| !k.is_trivia() && !k.is_grouping()) {
                 renderer.writer.push(",");
-                if renderer.config().spacing {
-                    renderer.writer.push(" ");
-                }
+                renderer.writer.push(" ");
             }
         } else if multiline && child.kind() == SyntaxKind::LeftParen {
             renderer.writer.open_grouping(child.text()).newline();

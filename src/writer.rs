@@ -125,10 +125,6 @@ impl Writer {
         }
         self.value
     }
-
-    pub fn config(&self) -> &Config {
-        &self.config
-    }
 }
 
 #[cfg(test)]
