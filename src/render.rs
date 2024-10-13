@@ -461,7 +461,7 @@ impl<'a> Renderable<'a> for ListItem<'a> {
                 render_anon(child, renderer);
             }
         }
-        renderer.writer.newline().dec_indent();
+        renderer.writer.newline().dec_indent(true);
     }
 }
 impl<'a> Renderable<'a> for EnumItem<'a> {
@@ -478,7 +478,7 @@ impl<'a> Renderable<'a> for EnumItem<'a> {
                 render_anon(child, renderer);
             }
         }
-        renderer.writer.newline().dec_indent();
+        renderer.writer.newline().dec_indent(true);
     }
 }
 impl<'a> Renderable<'a> for TermItem<'a> {
@@ -498,7 +498,7 @@ impl<'a> Renderable<'a> for TermItem<'a> {
                 render_anon(child, renderer);
             }
         }
-        renderer.writer.newline().dec_indent();
+        renderer.writer.newline().dec_indent(true);
     }
 }
 

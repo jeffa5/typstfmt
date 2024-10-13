@@ -371,6 +371,7 @@ a,
 )
 "#,
 }
+
 test_snippet! {
     markup_indent_nonempty,
     expect = r#"
@@ -390,3 +391,18 @@ a,
 )
 "#,
 }
+
+test_snippet! {
+    list_in_content,
+    expect = r#"
+#[
+  - test
+]
+"#,
+    r#"
+#[
+  - test
+]
+"#,
+}
+

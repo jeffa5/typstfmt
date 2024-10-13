@@ -112,12 +112,14 @@ impl Writer {
     }
 
     /// Decreases the current indentation level by the amount specified in the style.
-    pub fn dec_indent(&mut self) -> &mut Self {
+    pub fn dec_indent(&mut self, invisible: bool) -> &mut Self {
         debug!("dec_indent");
-        if self.last_indent != LastIndentChange::Dec {
+        if invisible || self.last_indent != LastIndentChange::Dec {
             self.next_indent_level = self.next_indent_level.saturating_sub(self.config.indent);
             self.current_indent_level = self.next_indent_level;
-            self.last_indent = LastIndentChange::Dec;
+            if !invisible {
+                self.last_indent = LastIndentChange::Dec;
+            }
         }
         self
     }
@@ -130,7 +132,7 @@ impl Writer {
 
     pub fn close_grouping(&mut self, text: &str) -> &mut Self {
         debug!(?text, "close grouping");
-        self.dec_indent();
+        self.dec_indent(false);
         self.push(text);
         self
     }
@@ -169,7 +171,7 @@ mod tests {
             .newline()
             .push("b,")
             .newline()
-            .dec_indent()
+            .dec_indent(false)
             .push(")");
         similar_asserts::assert_eq!(
             writer.finish(),
