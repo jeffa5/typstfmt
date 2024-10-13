@@ -53,10 +53,10 @@ List some fuzz targets:
 cargo fuzz list
 ```
 
-Then run one, e.g. for `nofmt_unchanged`:
+Then run one, e.g. for `crash_proof`:
 
 ```sh
-cargo fuzz run nofmt_unchanged
+cargo fuzz run crash_proof
 ```
 
 ### Testing against the package repo

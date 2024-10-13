@@ -42,20 +42,3 @@ macro_rules! test_snippet_reformat {
         }
     };
 }
-
-#[allow(unused_macros)]
-macro_rules! test_snippet_unchanged {
-    (
-        $test_name:ident,
-        $(ignore = $ignore:tt ,)?
-        $snippet:expr,
-    ) => {
-        #[test]
-        $(#[ignore = $ignore])?
-        fn $test_name() {
-            let _ = tracing_subscriber::fmt().with_test_writer().with_max_level(tracing::Level::DEBUG).try_init();
-            let formatted = typstfmt::format($snippet, typstfmt::Config::no_changes()).unwrap();
-            similar_asserts::assert_eq!(&formatted, $snippet);
-        }
-    };
-}
