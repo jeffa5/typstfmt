@@ -371,3 +371,22 @@ a,
 )
 "#,
 }
+test_snippet! {
+    markup_indent_nonempty,
+    expect = r#"
+#f(
+  g([
+    a
+  ]),
+  a,
+)
+"#,
+    r#"
+#f(
+g([
+a
+]),
+a,
+)
+"#,
+}
