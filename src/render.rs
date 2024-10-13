@@ -350,7 +350,6 @@ impl<'a> Children<'a> {
 impl<'a> Renderable<'a> for Markup<'a> {
     fn render_impl(&self, renderer: &mut Renderer) {
         let mut children = Children::new(self.to_untyped());
-        let mut last = None;
         while children.next().is_some() {
             let child = children.current().unwrap();
             if let Some(parbreak) = child.cast::<Parbreak>() {
@@ -361,13 +360,16 @@ impl<'a> Renderable<'a> for Markup<'a> {
                 }
             } else if let Some(expr) = child.cast::<Expr>() {
                 expr.render(renderer);
-            } else if last.map_or(false, |n| is_block(&n)) && child.kind() == SyntaxKind::Space {
+            } else if children
+                .peek_prev()
+                .map_or(children.peek_next().is_none(), |n| is_block(n))
+                && child.kind() == SyntaxKind::Space
+            {
                 // skip adding newlines or spacing after block elements as they handle newlines
                 // themselves
             } else {
                 render_anon(child, renderer);
             }
-            last = Some((*child).clone());
         }
     }
 }
@@ -375,17 +377,20 @@ impl<'a> Renderable<'a> for Markup<'a> {
 impl<'a> Renderable<'a> for CodeBlock<'a> {
     fn render_impl(&self, renderer: &mut Renderer) {
         let mut children = Children::new(self.to_untyped());
-        let mut last = None;
-        while let Some(child) = children.next() {
+        while children.next().is_some() {
+            let child = children.current().unwrap();
             if let Some(code) = child.cast::<Code>() {
                 code.render(renderer);
-            } else if last.map_or(false, |n| is_block(&n)) && child.kind() == SyntaxKind::Space {
+            } else if children
+                .peek_prev()
+                .map_or(children.peek_next().is_none(), |n| is_block(n))
+                && child.kind() == SyntaxKind::Space
+            {
                 // skip adding newlines or spacing after block elements as they handle newlines
                 // themselves
             } else {
                 render_anon(child, renderer);
             }
-            last = Some((*child).clone());
         }
     }
 }
@@ -630,7 +635,7 @@ impl<'a> Renderable<'a> for Binary<'a> {
             } else if child.kind() == SyntaxKind::Not
                 && children
                     .peek_next_non_space()
-                    .map_or(false, |n| n.kind() == SyntaxKind::In)
+                    .map_or(true, |n| n.kind() == SyntaxKind::In)
             {
                 renderer.writer.push(" ").push(child.text());
             } else if child.kind() == SyntaxKind::Space {

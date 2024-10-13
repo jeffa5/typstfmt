@@ -15,7 +15,6 @@ test_snippet!(
     "#{\n// a line comment\n// another\n}",
 );
 
-
 test_snippet!(
     codeblock_single,
     expect = r"
@@ -353,5 +352,22 @@ test_snippet! {
 #block(block(block(
   width: 100%,
 )))
+"#,
+}
+
+test_snippet! {
+    markup_indent,
+    expect = r#"
+#f(
+  g([]),
+  a,
+)
+"#,
+    r#"
+#f(
+g([
+]),
+a,
+)
 "#,
 }
