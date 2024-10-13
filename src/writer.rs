@@ -13,7 +13,15 @@ pub struct Writer {
     /// The current indentation level, in spaces.
     current_indent_level: usize,
     next_indent_level: usize,
-    incremented_indents_in_line: u32,
+    last_indent: LastIndentChange,
+}
+
+#[derive(Default, PartialEq, PartialOrd)]
+enum LastIndentChange {
+    Inc,
+    Dec,
+    #[default]
+    None,
 }
 
 impl Writer {
@@ -25,7 +33,7 @@ impl Writer {
             line: String::new(),
             current_indent_level: 0,
             next_indent_level: 0,
-            incremented_indents_in_line: 0,
+            last_indent: LastIndentChange::None,
         }
     }
 
@@ -43,7 +51,7 @@ impl Writer {
         }
         self.value.push('\n');
         self.current_indent_level = self.next_indent_level;
-        self.incremented_indents_in_line = 0;
+        self.last_indent = LastIndentChange::None;
     }
 
     /// Push the current indentation amount.
@@ -96,20 +104,20 @@ impl Writer {
     /// Increases the current indentation level by the amount specified in the style.
     pub fn inc_indent(&mut self) -> &mut Self {
         debug!("inc_indent");
-        if self.incremented_indents_in_line == 0 {
+        if self.last_indent != LastIndentChange::Inc {
             self.next_indent_level = self.next_indent_level.saturating_add(self.config.indent);
+            self.last_indent = LastIndentChange::Inc;
         }
-        self.incremented_indents_in_line += 1;
         self
     }
 
     /// Decreases the current indentation level by the amount specified in the style.
     pub fn dec_indent(&mut self) -> &mut Self {
         debug!("dec_indent");
-        self.incremented_indents_in_line = self.incremented_indents_in_line.saturating_sub(1);
-        if self.incremented_indents_in_line == 0 {
+        if self.last_indent != LastIndentChange::Dec {
             self.next_indent_level = self.next_indent_level.saturating_sub(self.config.indent);
             self.current_indent_level = self.next_indent_level;
+            self.last_indent = LastIndentChange::Dec;
         }
         self
     }
